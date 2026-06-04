@@ -164,6 +164,7 @@ from mcpgateway.services.a2a_service import A2AAgentError, A2AAgentNameConflictE
 from mcpgateway.services.cancellation_service import cancellation_service
 from mcpgateway.services.completion_service import CompletionError, CompletionService
 from mcpgateway.services.content_security import ContentPatternError, ContentSizeError, ContentTypeError, TemplateValidationError
+from mcpgateway.services.dataplane_publisher import DataplanePublisherService
 from mcpgateway.services.email_auth_service import EmailAuthService
 from mcpgateway.services.export_service import ExportError, ExportService
 from mcpgateway.services.gateway_service import GatewayConnectionError, GatewayDuplicateConflictError, GatewayError, GatewayNameConflictError, GatewayNotFoundError
@@ -178,7 +179,6 @@ from mcpgateway.services.prompt_service import PromptError, PromptLockConflictEr
 from mcpgateway.services.resource_service import ResourceError, ResourceLockConflictError, ResourceNotFoundError, ResourceURIConflictError
 from mcpgateway.services.server_service import ServerError, ServerLockConflictError, ServerNameConflictError, ServerNotFoundError
 from mcpgateway.services.tag_service import TagService
-from mcpgateway.services.dataplane_publisher import DataplanePublisherService
 from mcpgateway.services.tool_service import ToolError, ToolLockConflictError, ToolNameConflictError, ToolNotFoundError
 from mcpgateway.transports.sse_transport import SSETransport
 from mcpgateway.transports.streamablehttp_transport import (
@@ -192,7 +192,7 @@ from mcpgateway.transports.streamablehttp_transport import (
 from mcpgateway.utils import uaid as uaid_utils
 from mcpgateway.utils.admin_check import is_admin_bypass_granted
 from mcpgateway.utils.csp_nonce import get_csp_nonce_from_request
-from mcpgateway.utils.error_formatter import ErrorFormatter
+from mcpgateway.utils.error_formatter import ErrorFormatter, should_expose_error_details
 from mcpgateway.utils.internal_http import internal_loopback_base_url, internal_loopback_verify
 from mcpgateway.utils.metadata_capture import MetadataCapture
 from mcpgateway.utils.orjson_response import ORJSONResponse
@@ -2142,6 +2142,11 @@ async def request_validation_exception_handler(_request: Request, exc: RequestVa
     Returns:
         JSONResponse: A 422 Unprocessable Entity response with error details.
     """
+    logger.warning("Request validation error on %s: %s", _request.url.path if _request else "unknown", exc)
+
+    if not should_expose_error_details():
+        return ORJSONResponse(status_code=422, content={"detail": "An error occurred, please try again."})
+
     if _request.url.path.startswith("/tools"):
         error_details = []
 
@@ -2158,8 +2163,7 @@ async def request_validation_exception_handler(_request: Request, exc: RequestVa
             error_detail = {"type": type_, "loc": loc, "msg": msg, "ctx": ctx_serializable}
             error_details.append(error_detail)
 
-        response_content = {"detail": error_details}
-        return ORJSONResponse(status_code=422, content=response_content)
+        return ORJSONResponse(status_code=422, content={"detail": error_details})
     return await fastapi_default_validation_handler(_request, exc)
 
 
