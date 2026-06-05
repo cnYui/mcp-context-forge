@@ -121,10 +121,8 @@ Aligned `values.yaml` with `config.py` secure defaults and tightened for product
 #### **🔒 Ingress TLS and Redirect Hardening**
 * Enabled ingress TLS defaults for:
   - `mcpContextForge.ingress.tls.enabled: true`
-  - `mcpFastTimeServer.ingress.tls.enabled: true`
 * Ingress templates now auto-generate TLS secret names when unset:
   - Gateway: `<release>-ingress-tls`
-  - Fast-time: `<release>-fast-time-ingress-tls`
 * For nginx ingress classes with TLS enabled, chart now applies secure defaults unless overridden:
   - `nginx.ingress.kubernetes.io/ssl-redirect: "true"`
   - `nginx.ingress.kubernetes.io/force-ssl-redirect: "true"`

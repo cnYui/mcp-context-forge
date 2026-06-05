@@ -23,22 +23,18 @@ This makes the Terraform MCP Server a powerful tool for enabling advanced automa
 
 ## Prerequisites
 
-* **Go** – Required if you plan to install the server from source. Install [Go](https://go.dev/doc/install).
 * **Docker** – Required if you plan to run the server in a container. Install [Docker](https://www.docker.com/).
 * **jq** – Optional but recommended for formatting JSON output in command results. Install [jq](https://jqlang.org/download/).
 
 ## Installation And Setup
 
-### Option 1: Install from source (Go)
+### Option 1: Install a Release Binary
 
-#### Install the latest release version
 ```shell
-go install github.com/hashicorp/terraform-mcp-server/cmd/terraform-mcp-server@latest
+curl -fsSL https://github.com/hashicorp/terraform-mcp-server/releases/latest
 ```
-#### Install the main branch from source
-```shell
-go install github.com/hashicorp/terraform-mcp-server/cmd/terraform-mcp-server@main
-```
+
+Download the release asset for your platform from the latest release page and place the binary on your `PATH`.
 
 ### Option 2: Build The Image (Docker)
 
@@ -74,13 +70,13 @@ To enable stateless mode, set the environment variable: `export MCP_SESSION_MODE
 
 ### Starting the Server
 
-#### [Go] Running the server in Stdio mode
+#### Running the server in Stdio mode
 
 ```shell
 terraform-mcp-server stdio [--log-file /path/to/log]
 ```
 
-#### [Go] Running the server in Streamable HTTP mode
+#### Running the server in Streamable HTTP mode
 
 ```shell
 terraform-mcp-server streamable-http [--transport-port 8080] [--transport-host 127.0.0.1] [--mcp-endpoint /mcp] [--log-file /path/to/log]

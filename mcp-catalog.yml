@@ -1402,16 +1402,6 @@ catalog_servers:
     install: "uvx --from office-powerpoint-mcp-server ppt_mcp_server"
     tags: ["powerpoint", "presentations", "office", "documents", "self-hosted"]
 
-  - id: fast-time-server
-    name: "Fast Time Server"
-    category: "Time Services"
-    url: "http://localhost:8101/sse"
-    auth_type: "Open"
-    provider: "ContextForge"
-    description: "Minimal Go service for time operations with MCP tools, resources, and prompts"
-    requires_api_key: false
-    tags: ["time", "timezone", "local", "development"]
-
 # Categories for filtering
 categories:
   - Project Management

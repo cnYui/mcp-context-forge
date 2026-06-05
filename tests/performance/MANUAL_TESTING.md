@@ -14,7 +14,7 @@ Complete CLI testing examples for ContextForge API endpoints.
 sudo apt-get install jq
 
 # Install hey
-go install github.com/rakyll/hey@latest
+install hey from https://github.com/rakyll/hey/releases
 # OR download from: https://github.com/rakyll/hey/releases
 ```
 

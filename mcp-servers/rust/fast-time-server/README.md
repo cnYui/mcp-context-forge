@@ -69,7 +69,7 @@ The server includes REST API endpoints that bypass MCP session overhead for accu
 
 ```bash
 # Install hey
-go install github.com/rakyll/hey@latest
+install hey from https://github.com/rakyll/hey/releases
 
 # Run full benchmark (1M requests, 200 concurrent)
 make bench
@@ -166,9 +166,9 @@ The `get_system_time` tool supports:
 - IANA timezone names (e.g., `America/New_York`, `Europe/London`, `Asia/Tokyo`)
 - Fixed offsets (e.g., `+05:30`, `-08:00`)
 
-## Comparison with Go Server
+## Benchmark Target
 
-This server is designed to be compared with the Go `fast-time-server` for benchmarking purposes. Both implement similar functionality with the same transport (streamable HTTP).
+This server is the repository benchmark target for Streamable HTTP MCP performance testing.
 
 ## License
 

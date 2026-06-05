@@ -62,7 +62,7 @@ API: Quick Usage & Testing Guide
        -H "Content-Type: application/json" \
        -d '{
              "server": {
-               "name": "fast-time",
+               "name": "git-server",
                "description": "Demo server",
                "tags": ["demo"]
              },
@@ -83,14 +83,14 @@ API: Quick Usage & Testing Guide
 
 **JSON‑RPC Tool Calls**
 - Endpoint: `POST /rpc` (auth). Body is JSON‑RPC 2.0.
-- Example calling a tool named `fast-time-git-status`:
+- Example calling a tool named `git-server-git-status`:
   ```bash
   curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
        -H "Content-Type: application/json" \
        -d '{
              "jsonrpc": "2.0",
              "id": 1,
-             "method": "fast-time-git-status",
+             "method": "git-server-git-status",
              "params": {"repo_path": "/path/to/repo"}
            }' \
        http://localhost:4444/rpc | jq

@@ -56,7 +56,7 @@ plugins:
     priority: 10
     applied_to:
       tools:
-        - tool_name: "fast-time-git-status"
+        - tool_name: "git-server-git-status"
           context:
             - "global.opa_policy_context.git_context"
           extensions:
@@ -103,7 +103,7 @@ plugins:
     priority: 30
     applied_to:
       tools:
-        - tool_name: "fast-time-git-status"
+        - tool_name: "git-server-git-status"
           extensions:
             policy: "example"
             policy_endpoints:
@@ -185,15 +185,15 @@ export MCPGATEWAY_BEARER_TOKEN=$(python3 -m mcpgateway.utils.create_jwt_token --
 ```
 
 
-1. Add server fast-time that exposes git tools in the mcp gateway
+1. Add server git-server that exposes git tools in the mcp gateway
 ```bash
 curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"name":"fast-time","url":"http://localhost:9000/sse"}' \
+     -d '{"name":"git-server","url":"http://localhost:9000/sse"}' \
      http://localhost:4444/gateways
 ```
 
-2. This adds server to the gateway and exposes all the tools for git. You would see `fast-time-git-status` as the tool appearing in the tools tab of mcp gateway.
+2. This adds server to the gateway and exposes all the tools for git. You would see `git-server-git-status` as the tool appearing in the tools tab of mcp gateway.
 
 3. The next step is to enable the opa plugin which you can do by adding `PLUGINS_ENABLED=true` and the following blob in `plugins/config.yaml` file. This will indicate that OPA Plugin is running as an external MCP server.
 
@@ -206,19 +206,19 @@ curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
       url: http://127.0.0.1:8000/mcp
   ```
 
-2. To test this plugin with the above tool `fast-time-git-status` you can either invoke it through the UI
+2. To test this plugin with the above tool `git-server-git-status` you can either invoke it through the UI
 ```bash
-# 1️⃣  Add fast-time server to mcpgateway
+# 1️⃣  Add git-server server to mcpgateway
 curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"name":"fast-time","url":"http://localhost:9000/sse"}' \
+     -d '{"name":"git-server","url":"http://localhost:9000/sse"}' \
      http://localhost:4444/gateways
 
 # 2️⃣  Check if policies are in action.
 # Deny case
 curl -X POST -H "Content-Type: application/json" \
      -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
-     -d '{"jsonrpc":"2.0","id":1,"method":"fast-time-git-status","params":{"repo_path":"path/BIM"}}' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"git-server-git-status","params":{"repo_path":"path/BIM"}}' \
      http://localhost:4444/rpc
 
 >>>
@@ -228,7 +228,7 @@ curl -X POST -H "Content-Type: application/json" \
 # Allow case
 curl -X POST -H "Content-Type: application/json" \
      -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
-     -d '{"jsonrpc":"2.0","id":1,"method":"fast-time-git-status","params":{"repo_path":"path/IBM"}}' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"git-server-git-status","params":{"repo_path":"path/IBM"}}' \
      http://localhost:4444/rpc
 
 >>>

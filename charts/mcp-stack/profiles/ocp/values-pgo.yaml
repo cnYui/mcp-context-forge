@@ -372,7 +372,7 @@ route:
 
 # --- Fast Time Server ---
 mcpFastTimeServer:
-  enabled: true
+  enabled: false                          # image not available in OCP shared registry
 
 # --- Testing / Registration ---
 testing:
@@ -388,18 +388,8 @@ testing:
       secret: "my-test-key-but-now-longer-than-32-bytes"  # pragma: allowlist secret
   fastTime:
     register:
-      enabled: true
+      enabled: false                       # depends on mcpFastTimeServer
       createVirtualServer: true
-  fastTestServer:
-    enabled: false                         # image not available in OCP shared registry
-  fastTest:
-    register:
-      enabled: false                       # depends on fastTestServer
-  a2a:
-    register:
-      enabled: false
-  a2aEchoAgent:
-    enabled: false
   locust:
     enabled: false                           # off by default; ocp-benchmark-setup enables it on demand
     users: 125

@@ -11,7 +11,7 @@ The modular gateway architecture requires protocol modules (MCP, A2A, LLM,
 REST/gRPC) to communicate with the core platform over a well-defined boundary.
 That boundary must:
 
-- Support modules written in any language (Python, Rust, Go).
+- Support modules written in any language (Python, Rust).
 - Handle both request/response and server-streaming patterns (e.g., catalog change subscriptions, SSE relay).
 - Keep latency low enough that per-request overhead is negligible relative to upstream calls.
 - Align with existing patterns in the codebase (the plugin framework already supports gRPC external runtimes).
@@ -41,7 +41,7 @@ during migration, but it does not redefine the longer-term default boundary.
 
 ### Positive
 
-- Single contract definition (protobuf) generates client/server stubs for Python, Rust, Go, and other languages.
+- Single contract definition (protobuf) generates client/server stubs for Python, Rust and other languages.
 - Streaming RPCs natively support catalog change subscriptions and session broadcast patterns.
 - UDS avoids TCP overhead and keeps traffic host-local.
 - Clean process boundary enables crash isolation and independent scaling of modules.

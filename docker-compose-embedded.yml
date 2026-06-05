@@ -3,8 +3,8 @@
 #
 #  This is an OVERRIDE file. Use it with docker-compose.yml:
 #
-#    docker compose -f docker-compose.yml -f docker-compose-embedded.yml --profile benchmark up -d
-#    docker compose -f docker-compose.yml -f docker-compose-embedded.yml --profile benchmark down
+#    docker compose -f docker-compose.yml -f docker-compose-embedded.yml up -d
+#    docker compose -f docker-compose.yml -f docker-compose-embedded.yml down
 #
 #  Or simply:
 #    make embedded-up
@@ -149,72 +149,3 @@ services:
     depends_on:
       gateway:
         condition: service_healthy
-
-  ###############################################################################
-  # Benchmark Server - 10 MCP servers with 50 tools each = 500 tools
-  # For pagination testing with large numbers of items
-  ###############################################################################
-  # Benchmark services: inherited from base compose (profiles: ["benchmark"])
-  # Activated via --profile benchmark in Makefile targets
-  register_benchmark:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-      - BENCHMARK_SERVER_COUNT=${BENCHMARK_SERVER_COUNT:-10}
-      - BENCHMARK_START_PORT=${BENCHMARK_START_PORT:-9000}
-    command:
-      - |
-        echo "Registering benchmark servers with gateway..."
-
-        # Wait for benchmark servers to start (no healthcheck available)
-        echo "Waiting for benchmark servers to start..."
-        sleep 5
-
-        # Generate JWT token (uses overridden jwt-secret-key)
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --exp 10080 --secret jwt-secret-key --algo HS256 2>/dev/null)
-
-        # Register benchmark servers
-        python3 -c "
-        import urllib.request
-        import json
-        import os
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-        server_count = int(os.environ.get('BENCHMARK_SERVER_COUNT', '10'))
-        start_port = int(os.environ.get('BENCHMARK_START_PORT', '9000'))
-
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json'
-        }
-
-        def api_request(method, path, data=None):
-            url = f'http://gateway:4444{path}'
-            body = json.dumps(data).encode() if data else None
-            req = urllib.request.Request(url, data=body, headers=headers, method=method)
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode())
-
-        print(f'Registering {server_count} benchmark servers (ports {start_port}-{start_port + server_count - 1})...')
-        registered = 0
-        for port in range(start_port, start_port + server_count):
-            name = f'benchmark-{port}'
-            try:
-                result = api_request('POST', '/gateways', {
-                    'name': name,
-                    'url': f'http://benchmark_server:{port}/mcp',
-                    'transport': 'STREAMABLEHTTP'
-                })
-                print(f'Registered {name}: {result.get(\"id\", \"unknown\")}')
-                registered += 1
-            except urllib.error.HTTPError as e:
-                if e.code == 409:
-                    print(f'{name} already registered')
-                    registered += 1
-                else:
-                    print(f'Failed to register {name}: HTTP {e.code}')
-            except Exception as e:
-                print(f'Failed to register {name}: {e}')
-
-        print(f'Registration complete: {registered}/{server_count} benchmark servers')
-        "

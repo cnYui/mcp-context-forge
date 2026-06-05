@@ -96,14 +96,14 @@
 
     - ⏳ [**#267**](https://github.com/IBM/mcp-context-forge/issues/267) - [FEATURE][MCP-SERVER]: Java implementation - plantuml-server
     - ⏳ [**#268**](https://github.com/IBM/mcp-context-forge/issues/268) - [FEATURE][MCP-SERVER]: Haskell implementation - pandoc-server
-    - ⏳ [**#269**](https://github.com/IBM/mcp-context-forge/issues/269) - [FEATURE][MCP-SERVER]: Go implementation - LaTeX service
-    - ⏳ [**#270**](https://github.com/IBM/mcp-context-forge/issues/270) - [FEATURE][MCP-SERVER]: Go implementation - libreoffice-server
+    - ⏳ [**#269**](https://github.com/IBM/mcp-context-forge/issues/269) - [FEATURE][MCP-SERVER]: Rust implementation - LaTeX service
+    - ⏳ [**#270**](https://github.com/IBM/mcp-context-forge/issues/270) - [FEATURE][MCP-SERVER]: Rust implementation - libreoffice-server
     - ⏳ [**#273**](https://github.com/IBM/mcp-context-forge/issues/273) - [FEATURE][TERRAFORM]: mcp-gateway-aws module (EKS, ECS Fargate)
     - ⏳ [**#274**](https://github.com/IBM/mcp-context-forge/issues/274) - [FEATURE][TERRAFORM]: mcp-gateway-azure module (AKS, ACA)
     - ⏳ [**#275**](https://github.com/IBM/mcp-context-forge/issues/275) - [FEATURE][TERRAFORM]: mcp-gateway-gcp module (GKE, Cloud Run)
     - ⏳ [**#276**](https://github.com/IBM/mcp-context-forge/issues/276) - [FEATURE][TERRAFORM]: mcp-gateway-ibm-cloud module (IKS, ROKS, Code Engine)
     - ⏳ [**#896**](https://github.com/IBM/mcp-context-forge/issues/896) - [FEATURE]: Add prompt authoring tools category to MCP eval server
-    - ⏳ [**#897**](https://github.com/IBM/mcp-context-forge/issues/897) - [FEATURE][MCP-SERVER]: Go sample - database-query-server
+    - ⏳ [**#897**](https://github.com/IBM/mcp-context-forge/issues/897) - [FEATURE][MCP-SERVER]: Rust sample - database-query-server
     - ⏳ [**#899**](https://github.com/IBM/mcp-context-forge/issues/899) - [FEATURE][MCP-SERVER]: Python sample - ml-inference-server
     - ⏳ [**#901**](https://github.com/IBM/mcp-context-forge/issues/901) - [FEATURE][MCP-SERVER]: Rust sample - crypto-tools-server
     - ⏳ [**#903**](https://github.com/IBM/mcp-context-forge/issues/903) - [FEATURE][MCP-SERVER]: TypeScript sample - web-automation-server
@@ -1329,7 +1329,7 @@
     - ✅ [**#2372**](https://github.com/IBM/mcp-context-forge/issues/2372) - [CLEANUP][SONAR][LOW]: Dead code - unused function json_default in llmchat_router.py
     - ✅ [**#2377**](https://github.com/IBM/mcp-context-forge/issues/2377) - [CLEANUP][SONAR][LOW]: Deprecated datetime.utcnow() usage in main.py
     - ✅ [**#2382**](https://github.com/IBM/mcp-context-forge/issues/2382) - [CHORE][TESTS]: Remove unused PromptNotFoundError import
-    - ✅ [**#2630**](https://github.com/IBM/mcp-context-forge/issues/2630) - [CHORE][MCP-SERVERS]: Update dependencies across Python, Go, and Rust servers
+    - ✅ [**#2630**](https://github.com/IBM/mcp-context-forge/issues/2630) - [CHORE][MCP-SERVERS]: Update dependencies across Python, and Rust servers
     - ✅ [**#2651**](https://github.com/IBM/mcp-context-forge/issues/2651) - [CHORE]: Remove unused runtime dependencies from pyproject.toml
     - ✅ [**#2665**](https://github.com/IBM/mcp-context-forge/issues/2665) - [CHORE][PYTEST]: Add verbose test output option for real-time test name visibility
     - ✅ [**#2981**](https://github.com/IBM/mcp-context-forge/issues/2981) - [CHORE][SONAR]: Fix all must-fix SonarQube findings - type safety, async tasks, dead code
@@ -1647,7 +1647,6 @@
 
     - ✅ [**#80**](https://github.com/IBM/mcp-context-forge/issues/80) - [Feature Request]: Publish a multi-architecture container (including ARM64) support
     - ✅ [**#288**](https://github.com/IBM/mcp-context-forge/issues/288) - [Feature Request]: MariaDB Support Testing, Documentation, CI/CD (alongside PostgreSQL & SQLite) *(deprecated — MySQL/MariaDB support removed)*
-    - ✅ [**#898**](https://github.com/IBM/mcp-context-forge/issues/898) - Sample MCP Server - Go (system-monitor-server)
     - ✅ [**#932**](https://github.com/IBM/mcp-context-forge/issues/932) - [Feature Request]: Air-Gapped Environment Support
     - ✅ [**#1019**](https://github.com/IBM/mcp-context-forge/issues/1019) - [Feature] Authentication Architecture through Plugin System
     - ✅ [**#1138**](https://github.com/IBM/mcp-context-forge/issues/1138) - [Feature Request]: Support for container builds for s390x
@@ -1805,11 +1804,9 @@
 ???+ check "✨ Completed Features (17)"
 
     - ✅ [**#1176**](https://github.com/IBM/mcp-context-forge/issues/1176) - [Feature Request]: Implement Team-Level Scoping for API Tokens
-    - ✅ [**#1043**](https://github.com/IBM/mcp-context-forge/issues/1043) - [Feature]: Sample MCP Server - Implement Pandoc MCP server in Go
     - ✅ [**#1035**](https://github.com/IBM/mcp-context-forge/issues/1035) - [Feature Request]: Add "Team" Column to All Admin UI Tables (Tools, Gateway Server, Virtual Servers, Prompts, Resources)
     - ✅ [**#979**](https://github.com/IBM/mcp-context-forge/issues/979) - [Feature Request]: OAuth Dynamic Client Registration
     - ✅ [**#964**](https://github.com/IBM/mcp-context-forge/issues/964) - Support dynamic environment variable injection in mcpgateway.translate for STDIO MCP servers
-    - ✅ [**#920**](https://github.com/IBM/mcp-context-forge/issues/920) - Sample MCP Server - Go (calculator-server)
     - ✅ [**#900**](https://github.com/IBM/mcp-context-forge/issues/900) - Sample MCP Server - Python (data-analysis-server)
     - ✅ [**#699**](https://github.com/IBM/mcp-context-forge/issues/699) - [Feature]: Metrics Enhancement (export all data, capture all metrics, fix last used timestamps, UI improvements)
     - ✅ [**#298**](https://github.com/IBM/mcp-context-forge/issues/298) - [Feature Request]: A2A Initial Support - Add A2A Servers as Tools
@@ -1975,7 +1972,7 @@
     - ✅ [**#452**](https://github.com/IBM/mcp-context-forge/issues/452) - [Bug]: integrationType should only support REST, not MCP (Remove Integration Type: MCP)
     - ✅ [**#405**](https://github.com/IBM/mcp-context-forge/issues/405) - [Bug]: Fix the go time server annotation (it shows as destructive)
     - ✅ [**#404**](https://github.com/IBM/mcp-context-forge/issues/404) - [Feature Request]: Add resources and prompts/prompt templates to time server
-    - ✅ [**#380**](https://github.com/IBM/mcp-context-forge/issues/380) - [Feature Request]: REST Endpoints for Go fast-time-server
+    - ✅ [**#380**](https://github.com/IBM/mcp-context-forge/issues/380) - [Feature Request]: REST Endpoints for Rust fast-time-server
     - ✅ [**#368**](https://github.com/IBM/mcp-context-forge/issues/368) - [Feature Request]: Enhance Metrics Tab UI with Virtual Servers and Top 5 Performance Tables
     - ✅ [**#364**](https://github.com/IBM/mcp-context-forge/issues/364) - [Feature Request]: Add Log File Support to ContextForge
     - ✅ [**#344**](https://github.com/IBM/mcp-context-forge/issues/344) - [CHORE]: Implement additional security headers and CORS configuration
@@ -2180,7 +2177,6 @@
 
 ???+ check "✨ Completed Features (8)"
 
-    - ✅ [**#265**](https://github.com/IBM/mcp-context-forge/issues/265) - [Feature Request]: Sample MCP Server - Go (fast-time-server)
     - ✅ [**#179**](https://github.com/IBM/mcp-context-forge/issues/179) - [Feature Request]: Configurable Connection Retries for DB and Redis
     - ✅ [**#159**](https://github.com/IBM/mcp-context-forge/issues/159) - [Feature Request]: Add auto activation of mcp-server, when it goes up back again
     - ✅ [**#154**](https://github.com/IBM/mcp-context-forge/issues/154) - [Feature Request]: Export connection strings to various clients from UI and via API

@@ -14,10 +14,10 @@ Components tested:
 - PostgreSQL - Database performance baseline (optional, requires psycopg)
 - Redis - Cache performance baseline (optional, requires redis)
 User Classes (selectable via --class-picker in Web UI):
-- FastTimeRESTUser: Standard REST API load test (weight: 10)
-- FastTimeMCPUser: MCP protocol test direct to server (weight: 1)
+- FastTestRESTUser: Standard REST API load test (weight: 10)
+- FastTestMCPUser: MCP protocol test direct to server (weight: 1)
 - GatewayMCPUser: MCP protocol test through gateway (weight: 1)
-- FastTimeStressUser: High-frequency stress test (weight: 1)
+- FastTestStressUser: High-frequency stress test (weight: 1)
 - PostgresUser: Direct PostgreSQL testing (weight: 1, requires psycopg)
 - RedisUser: Direct Redis testing (weight: 1, requires redis)
 Default Parameters:
@@ -168,7 +168,7 @@ def on_test_stop(environment, **kwargs):
 # =============================================================================
 
 
-class FastTimeRESTUser(HttpUser):
+class FastTestRESTUser(HttpUser):
     """Load test for Fast Time Server REST API directly (no gateway).
 
     Tests the REST API endpoints exposed by the fast_time_server
@@ -267,7 +267,7 @@ class FastTimeRESTUser(HttpUser):
                 response.failure(f"Status {response.status_code}")
 
 
-class FastTimeStressUser(HttpUser):
+class FastTestStressUser(HttpUser):
     """High-frequency stress test for Fast Time Server.
 
     Minimal wait times to find maximum throughput.
@@ -295,7 +295,7 @@ class FastTimeStressUser(HttpUser):
 # =============================================================================
 
 
-class FastTimeMCPUser(User):
+class FastTestMCPUser(User):
     """Load test for Fast Time Server via MCP Streamable HTTP protocol.
 
     Tests the MCP protocol directly using synchronous HTTP requests to

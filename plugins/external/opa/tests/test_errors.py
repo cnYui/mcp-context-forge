@@ -38,7 +38,7 @@ async def test_error_opa_server_error():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -53,7 +53,7 @@ async def test_error_opa_server_error():
     incorrect_opa_url = "http://127.0.0.1:3000/v1/data/"
     config = PluginConfig(name="test", kind="opapluginfilter.OPAPluginFilter", hooks=["tool_pre_invoke"], config={"opa_base_url": incorrect_opa_url}, applied_to=config)
     plugin = OPAPluginFilter(config)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     try:
         await plugin.tool_pre_invoke(payload, context)
@@ -68,7 +68,7 @@ async def test_error_opa_server_invalid_endpoint():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -83,7 +83,7 @@ async def test_error_opa_server_invalid_endpoint():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     try:
         await plugin.tool_pre_invoke(payload, context)
@@ -98,7 +98,7 @@ async def test_error_opa_server_none_response():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example1",
                     "policy_endpoints": [
@@ -113,7 +113,7 @@ async def test_error_opa_server_none_response():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     try:
         await plugin.tool_pre_invoke(payload, context)
@@ -128,7 +128,7 @@ async def test_error_opa_server_unconfigured_endpoint():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_modality": ["text"],
@@ -140,7 +140,7 @@ async def test_error_opa_server_unconfigured_endpoint():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     try:
         await plugin.tool_pre_invoke(payload, context)
@@ -155,7 +155,7 @@ async def test_error_opa_server_unsupported_modality():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -170,7 +170,7 @@ async def test_error_opa_server_unsupported_modality():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPostInvokePayload(name="fast-time-git-status", result={"text": "IBM@example.com"})
+    payload = ToolPostInvokePayload(name="git-server-git-status", result={"text": "IBM@example.com"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     try:
         await plugin.tool_post_invoke(payload, context)
@@ -185,7 +185,7 @@ async def test_error_opa_server_unspecified_policy_modality():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -199,7 +199,7 @@ async def test_error_opa_server_unspecified_policy_modality():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPostInvokePayload(name="fast-time-git-status", result={"text": "IBM@example.com"})
+    payload = ToolPostInvokePayload(name="git-server-git-status", result={"text": "IBM@example.com"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_post_invoke(payload, context)
     assert not result.continue_processing

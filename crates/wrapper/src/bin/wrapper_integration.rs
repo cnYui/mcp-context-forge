@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn check_fast_time_server() -> Result<(), reqwest::Error> {
     let body = reqwest::Client::new()
-        .get("http://localhost:8080/health")
+        .get("http://localhost:8880/health")
         .send()
         .await?
         .text()

@@ -42,12 +42,6 @@ def test_docker_scan_builds_changed_dockerfiles():
 
     assert matrix == [
         {
-            "name": "a2a-echo-agent",
-            "context": "a2a-agents/go/a2a-echo-agent",
-            "file": "a2a-agents/go/a2a-echo-agent/Dockerfile",
-            "tag": "mcp-context-forge-a2a-echo-agent:scan",
-        },
-        {
             "name": "python-sandbox",
             "context": "mcp-servers/python/python_sandbox_server",
             "file": "mcp-servers/python/python_sandbox_server/docker/Dockerfile.sandbox",

@@ -1025,7 +1025,7 @@ Performance testing helps validate the stability, scalability, and responsivenes
 ```bash
 # Install hey (if not already installed)
 brew install hey  # on macOS
-go install github.com/rakyll/hey@latest  # if using Go
+install hey from https://github.com/rakyll/hey/releases
 
 # Run a basic test against the public health endpoint
 hey -z 30s -c 10 https://mcp-gateway.<CLUSTER_INGRESS_SUBDOMAIN>/health

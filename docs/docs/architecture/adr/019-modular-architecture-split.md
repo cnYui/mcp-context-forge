@@ -14,7 +14,7 @@ ContextForge codebase has grown to support diverse use cases:
 - Multi-regional deployments with federation
 - Independent utility tools (translate, wrapper, reverse-proxy)
 - Plugin ecosystem with external integrations
-- MCP servers in multiple languages (Python, Go, Rust)
+- MCP servers in multiple languages (Python and Rust)
 
 The monolithic architecture created challenges:
 
@@ -46,7 +46,7 @@ We will split ContextForge ecosystem into **14 independently deployable modules*
 
 ### MCP Servers (3 modules) - Zero Gateway Dependencies
 8. **mcp-contextforge-mcp-servers-python** - 4 Python servers
-9. **mcp-contextforge-mcp-servers-go** - 5 Go servers (static binaries, 5-15 MB)
+9. **mcp-contextforge-mcp-servers-rust** - 5 Rust servers (static binaries, 5-15 MB)
 10. **mcp-contextforge-mcp-servers-rust** - Rust servers (static binaries, 3-10 MB)
 
 ### Agent Runtimes (1 module)
@@ -118,7 +118,7 @@ kubectl apply -f mcp-server-docx.yaml
 
 **Edge Deployment (Minimal Footprint):**
 ```bash
-# Just the translate utility as a static Go binary
+# Just the translate utility as a static binary
 ./mcptranslate --stdio "command" --port 9000
 # No gateway, no Python, just protocol translation
 ```
@@ -181,14 +181,14 @@ This allows deploying the core gateway with only required features enabled, redu
 | Option | Why Not |
 |--------|---------|
 | **Monolithic repository** | Too large, slow CI/CD, conflicting versions, difficult navigation |
-| **Single binary (Go/Rust rewrite)** | Loss of Python ecosystem, major rewrite cost, slower development |
+| **Single binary (Rust rewrite)** | Loss of Python ecosystem, major rewrite cost, slower development |
 | **Microservices architecture** | Too heavyweight for many use cases, operational complexity |
 | **Monorepo with Bazel/Nx** | Complex build system, overkill for 14 modules |
 
 ## Migration Path
 
 1. Extract utilities (translate, wrapper, reverse-proxy) to independent repos
-2. Extract MCP servers (Python, Go, Rust) to independent repos
+2. Extract MCP servers (Python and Rust) to independent repos
 3. Extract plugins to independent repos
 4. Extract infrastructure (Helm, deployment scripts) to independent repos
 5. Core gateway remains with UI as optional dependency

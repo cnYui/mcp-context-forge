@@ -52,7 +52,7 @@ help:
 # Installation
 install:
 	@echo "Installing performance testing dependencies..."
-	@command -v hey >/dev/null 2>&1 || (echo "Installing hey..." && go install github.com/rakyll/hey@latest)
+	@command -v hey >/dev/null 2>&1 || (echo "Installing hey..." && install hey from https://github.com/rakyll/hey/releases)
 	@command -v python3 >/dev/null 2>&1 || (echo "Python 3 required but not found" && exit 1)
 	@pip install pyyaml >/dev/null 2>&1 || echo "Installing pyyaml..." && pip install pyyaml
 	@echo "✅ Dependencies installed"

@@ -53,7 +53,7 @@ discovery, compatibility checks, health integration, and release validation.
 }
 ```
 
-Second illustrative example for a Go LLM proxy module:
+Second illustrative example for a LLM proxy module:
 
 ```json
 {
@@ -104,7 +104,7 @@ Recommended categories:
 ## Protocol-Specific Notes
 
 - A Rust A2A module should declare task-state and invoke support explicitly.
-- A Go LLM proxy module should declare both chat-completion and streaming
+- A LLM proxy module should declare both chat-completion and streaming
   support explicitly.
 - A REST or gRPC module should declare whether it owns reflection, OpenAPI
   import, or only invocation relay.

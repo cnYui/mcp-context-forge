@@ -10,7 +10,7 @@ plugins:
     priority: 30
     applied_to:
       tools:
-        - tool_name: "fast-time-git-status"
+        - tool_name: "git-server-git-status"
           extensions:
             policy: "example"
             policy_endpoints:

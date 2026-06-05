@@ -37,18 +37,18 @@ plugins:
           effect: Permit
           principal: Role::"admin"
           action:
-            - Action::"fast-time-git-status" #tool name
+            - Action::"git-server-git-status" #tool name
           resource:
-            - Server::"fast-time" # mcp-server name
+            - Server::"git-server" # mcp-server name
 
         - id: redact-non-admin-views
           effect: Permit
           principal: Role::"non-admin"
           action:
-            - Action::"fast-time-git-status" #tool name
+            - Action::"git-server-git-status" #tool name
             - Action::"view_redacted_output"
           resource:
-            - Server::"fast-time"
+            - Server::"git-server"
 
         - id: allow-admin-resources # policy for resources
           effect: Permit

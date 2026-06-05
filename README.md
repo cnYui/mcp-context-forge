@@ -283,19 +283,9 @@ Copy [.env.example](https://github.com/IBM/mcp-context-forge/blob/main/.env.exam
 <summary><strong>🚀 End-to-end demo (register a local MCP server)</strong></summary>
 
 ```bash
-# 1️⃣  Spin up the sample GO MCP time server using mcpgateway.translate & docker (replace docker with podman if needed)
-python3 -m mcpgateway.translate \
-     --stdio "docker run --rm -i ghcr.io/ibm/fast-time-server:latest -transport=stdio" \
-     --expose-sse \
-     --port 8003
-
-# Or using the official mcp-server-git using uvx:
+# 1️⃣  Spin up an MCP server using mcpgateway.translate:
 pip install uv # to install uvx, if not already installed
 python3 -m mcpgateway.translate --stdio "uvx mcp-server-git" --expose-sse --port 9000
-
-# Alternative: running the local binary
-# cd mcp-servers/go/fast-time-server; make build
-# python3 -m mcpgateway.translate --stdio "./dist/fast-time-server -transport=stdio" --expose-sse --port 8002
 
 # NEW: Expose via multiple protocols simultaneously!
 python3 -m mcpgateway.translate \
@@ -308,7 +298,7 @@ python3 -m mcpgateway.translate \
 # 2️⃣  Register it with the gateway
 curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"name":"fast_time","url":"http://localhost:8003/sse"}' \
+     -d '{"name":"git_server","url":"http://localhost:9000/sse"}' \
      http://localhost:4444/gateways
 
 # 3️⃣  Verify tool catalog
@@ -477,7 +467,7 @@ kubectl exec deployment/mcp-gateway-mcp-context-forge -- \
 ```
 
 > SSRF note: Helm defaults to strict SSRF settings (`SSRF_ALLOW_PRIVATE_NETWORKS=false`).
-> If you register in-cluster tool URLs (for example fast-time or fast-test services),
+> If you register in-cluster tool URLs (for example fast-time services),
 > allow only your cluster CIDRs via `mcpContextForge.config.SSRF_ALLOWED_NETWORKS` or,
 > for local-only benchmark setups, temporarily set `SSRF_ALLOW_PRIVATE_NETWORKS=true`.
 > See `docs/docs/manage/configuration.md#ssrf-protection` and `docs/docs/deployment/helm.md`.

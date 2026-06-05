@@ -395,7 +395,7 @@ To validate the deployment with an MCP protocol benchmark using Locust.
 │      │          ▼                          ▼                               │
 │      │  ┌────────────────────┐  ┌────────────────────┐                    │
 │      │  │  fast-time server   │  │  fast-time server   │                    │
-│      │  │  Go, :80            │  │  Go, :80 (replica)  │                    │
+│      │  │  Rust, :8880       │  │  Rust, :8880       │                    │
 │      │  │  get-time,          │  │                      │                    │
 │      │  │  convert-time       │  │                      │                    │
 │      │  └────────────────────┘  └────────────────────┘                    │

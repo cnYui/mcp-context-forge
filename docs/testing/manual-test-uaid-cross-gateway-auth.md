@@ -293,8 +293,7 @@ export AUTH_USER="Authorization: Bearer $TOKEN_USER"
 **Purpose:** Create an agent that will be invoked via cross-gateway routing
 
 **Prerequisites:**
-- Start echo agent: `cd a2a-agents/go/a2a-echo-agent && go run main.go -port 9100`
-- Echo agent will be running on port 9100
+- Start an A2A-compatible test agent on port 9100
 
 **Steps:**
 

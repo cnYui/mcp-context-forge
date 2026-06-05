@@ -1789,7 +1789,7 @@ brew install hey           # macOS
 sudo apt install hey       # Ubuntu
 
 # Or from source
-go install github.com/rakyll/hey@latest
+install hey from https://github.com/rakyll/hey/releases
 ```
 
 **k6** - Modern load testing

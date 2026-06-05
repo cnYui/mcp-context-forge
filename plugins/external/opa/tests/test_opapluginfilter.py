@@ -41,7 +41,7 @@ async def test_pre_tool_invoke_opapluginfilter():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -56,13 +56,13 @@ async def test_pre_tool_invoke_opapluginfilter():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_pre_invoke(payload, context)
     assert result.continue_processing
 
     # Malign payload (denied by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/ibm"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/ibm"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_pre_invoke(payload, context)
     assert not result.continue_processing
@@ -75,7 +75,7 @@ async def test_post_tool_invoke_opapluginfilter():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -90,13 +90,13 @@ async def test_post_tool_invoke_opapluginfilter():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPostInvokePayload(name="fast-time-git-status", result={"text": "IBM"})
+    payload = ToolPostInvokePayload(name="git-server-git-status", result={"text": "IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_post_invoke(payload, context)
     assert result.continue_processing
 
     # Malign payload (denied by OPA (rego) policy)
-    payload = ToolPostInvokePayload(name="fast-time-git-status", result={"text": "IBM@example.com"})
+    payload = ToolPostInvokePayload(name="git-server-git-status", result={"text": "IBM@example.com"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_post_invoke(payload, context)
     assert not result.continue_processing
@@ -261,7 +261,7 @@ async def test_opapluginfilter_backward_compatibility():
     config = {
         "tools": [
             {
-                "tool_name": "fast-time-git-status",
+                "tool_name": "git-server-git-status",
                 "extensions": {
                     "policy": "example",
                     "policy_endpoints": [
@@ -276,13 +276,13 @@ async def test_opapluginfilter_backward_compatibility():
     plugin = OPAPluginFilter(config)
 
     # Benign payload (allowed by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/IBM"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/IBM"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_pre_invoke(payload, context)
     assert result.continue_processing
 
     # Malign payload (denied by OPA (rego) policy)
-    payload = ToolPreInvokePayload(name="fast-time-git-status", args={"repo_path": "/path/ibm"})
+    payload = ToolPreInvokePayload(name="git-server-git-status", args={"repo_path": "/path/ibm"})
     context = PluginContext(global_context=GlobalContext(request_id="1", server_id="2"))
     result = await plugin.tool_pre_invoke(payload, context)
     assert not result.continue_processing

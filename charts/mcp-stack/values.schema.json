@@ -2,110 +2,6 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "benchmark": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "register": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "gatewayPrefix": {
-              "type": "string"
-            },
-            "serverCount": {
-              "type": "integer"
-            },
-            "startPort": {
-              "type": "integer"
-            },
-            "transport": {
-              "type": "string"
-            }
-          }
-        },
-        "server": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pullPolicy": {
-                  "type": "string"
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
-              }
-            },
-            "prompts": {
-              "type": "integer"
-            },
-            "resources": {
-              "type": "integer"
-            },
-            "resourcesLimits": {
-              "type": "object",
-              "properties": {
-                "limits": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "requests": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "service": {
-              "type": "object",
-              "properties": {
-                "serverCount": {
-                  "type": "integer"
-                },
-                "startPort": {
-                  "type": "integer"
-                },
-                "type": {
-                  "type": "string"
-                }
-              }
-            },
-            "tools": {
-              "type": "integer"
-            },
-            "transport": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "description": "Optional benchmark profile values"
-    },
     "global": {
       "type": "object",
       "properties": {
@@ -1830,13 +1726,20 @@
             },
             "IDENTITY_PROPAGATION_ENABLED": {
               "type": "string",
-              "enum": ["true", "false"],
+              "enum": [
+                "true",
+                "false"
+              ],
               "description": "Enable end-user identity propagation to upstream MCP servers",
               "default": "false"
             },
             "IDENTITY_PROPAGATION_MODE": {
               "type": "string",
-              "enum": ["headers", "meta", "both"],
+              "enum": [
+                "headers",
+                "meta",
+                "both"
+              ],
               "description": "How to propagate identity: headers (HTTP), meta (MCP _meta), or both",
               "default": "both"
             },
@@ -1852,7 +1755,10 @@
             },
             "IDENTITY_SIGN_CLAIMS": {
               "type": "string",
-              "enum": ["true", "false"],
+              "enum": [
+                "true",
+                "false"
+              ],
               "description": "Sign propagated user claims with HMAC-SHA256 for upstream verification",
               "default": "false"
             },
@@ -2287,12 +2193,12 @@
             "repository": {
               "type": "string",
               "description": "Image repository",
-              "default": "ghcr.io/ibm/fast-time-server"
+              "default": "mcpgateway/fast-time-server"
             },
             "tag": {
               "type": "string",
               "description": "Image tag",
-              "default": "0.9.0"
+              "default": "latest"
             }
           },
           "description": "Fast Time Server image configuration"
@@ -2468,6 +2374,17 @@
             }
           },
           "description": "Resource limits and requests"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Environment variables for the Rust Fast Time Server container",
+          "default": {
+            "BIND_ADDRESS": "0.0.0.0:8080",
+            "RUST_LOG": "info"
+          }
         }
       },
       "description": "MCP Fast Time Server configuration"
@@ -4852,329 +4769,8 @@
     "testing": {
       "type": "object",
       "properties": {
-        "a2a": {
-          "type": "object",
-          "properties": {
-            "register": {
-              "type": "object",
-              "properties": {
-                "description": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "endpointPath": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "protocolVersion": {
-                  "type": "string"
-                },
-                "visibility": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "a2aEchoAgent": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "env": {
-              "type": "object",
-              "properties": {
-                "A2A_ECHO_ADDR": {
-                  "type": "string"
-                },
-                "A2A_ECHO_LOG_LEVEL": {
-                  "type": "string"
-                },
-                "A2A_ECHO_NAME": {
-                  "type": "string"
-                }
-              }
-            },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pullPolicy": {
-                  "type": "string"
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
-              }
-            },
-            "probes": {
-              "type": "object",
-              "properties": {
-                "liveness": {
-                  "type": "object",
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "integer"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "integer"
-                    },
-                    "path": {
-                      "type": "string"
-                    },
-                    "periodSeconds": {
-                      "type": "integer"
-                    },
-                    "port": {
-                      "type": "integer"
-                    },
-                    "successThreshold": {
-                      "type": "integer"
-                    },
-                    "timeoutSeconds": {
-                      "type": "integer"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "readiness": {
-                  "type": "object",
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "integer"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "integer"
-                    },
-                    "path": {
-                      "type": "string"
-                    },
-                    "periodSeconds": {
-                      "type": "integer"
-                    },
-                    "port": {
-                      "type": "integer"
-                    },
-                    "successThreshold": {
-                      "type": "integer"
-                    },
-                    "timeoutSeconds": {
-                      "type": "integer"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "resources": {
-              "type": "object",
-              "properties": {
-                "limits": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "requests": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "service": {
-              "type": "object",
-              "properties": {
-                "port": {
-                  "type": "integer"
-                },
-                "type": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
         "enabled": {
           "type": "boolean"
-        },
-        "fastTest": {
-          "type": "object",
-          "properties": {
-            "register": {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "gatewayName": {
-                  "type": "string"
-                },
-                "gatewayPath": {
-                  "type": "string"
-                },
-                "transport": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "fastTestServer": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "env": {
-              "type": "object",
-              "properties": {
-                "BIND_ADDRESS": {
-                  "type": "string"
-                },
-                "RUST_LOG": {
-                  "type": "string"
-                }
-              }
-            },
-            "image": {
-              "type": "object",
-              "properties": {
-                "pullPolicy": {
-                  "type": "string"
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
-              }
-            },
-            "probes": {
-              "type": "object",
-              "properties": {
-                "liveness": {
-                  "type": "object",
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "integer"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "integer"
-                    },
-                    "path": {
-                      "type": "string"
-                    },
-                    "periodSeconds": {
-                      "type": "integer"
-                    },
-                    "port": {
-                      "type": "integer"
-                    },
-                    "successThreshold": {
-                      "type": "integer"
-                    },
-                    "timeoutSeconds": {
-                      "type": "integer"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "readiness": {
-                  "type": "object",
-                  "properties": {
-                    "failureThreshold": {
-                      "type": "integer"
-                    },
-                    "initialDelaySeconds": {
-                      "type": "integer"
-                    },
-                    "path": {
-                      "type": "string"
-                    },
-                    "periodSeconds": {
-                      "type": "integer"
-                    },
-                    "port": {
-                      "type": "integer"
-                    },
-                    "successThreshold": {
-                      "type": "integer"
-                    },
-                    "timeoutSeconds": {
-                      "type": "integer"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "resources": {
-              "type": "object",
-              "properties": {
-                "limits": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "requests": {
-                  "type": "object",
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "service": {
-              "type": "object",
-              "properties": {
-                "port": {
-                  "type": "integer"
-                },
-                "type": {
-                  "type": "string"
-                }
-              }
-            }
-          }
         },
         "fastTime": {
           "type": "object",
@@ -5192,7 +4788,8 @@
                   "type": "string"
                 },
                 "gatewayPath": {
-                  "type": "string"
+                  "type": "string",
+                  "default": "/mcp"
                 },
                 "transport": {
                   "type": "string"

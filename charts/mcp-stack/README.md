@@ -34,12 +34,9 @@ By default, the chart uses strict SSRF settings:
 - `mcpContextForge.config.SSRF_ALLOWED_NETWORKS="[]"`
 
 This is the recommended production baseline.
-When you enable testing registration jobs (`testing.fastTime.register.enabled` or
-`testing.fastTest.register.enabled`), those jobs create gateways that point to
 in-cluster service URLs:
 
-- `fast-time`: `http://<release>-mcp-fast-time-server:80/http`
-- `fast-test`: `http://<release>-fast-test-server:8880/mcp`
+- `fast-time`: `http://<release>-mcp-fast-time-server:80/mcp`
 
 Those destinations are private cluster addresses and will be blocked under strict SSRF defaults.
 
@@ -1212,15 +1209,11 @@ When `RATELIMITER_REDIS_URL` is not set during start time, the gateway automatic
 | minio.resources.requests.memory | string | `"256Mi"` |  |
 | mcpFastTimeServer.enabled | bool | `true` |  |
 | mcpFastTimeServer.replicaCount | int | `2` |  |
-| mcpFastTimeServer.image.repository | string | `"ghcr.io/ibm/fast-time-server"` |  |
+| mcpFastTimeServer.image.repository | string | `"mcpgateway/fast-time-server"` |  |
 | mcpFastTimeServer.image.tag | string | `"latest"` |  |
 | mcpFastTimeServer.image.pullPolicy | string | `"IfNotPresent"` |  |
 | mcpFastTimeServer.port | int | `8080` |  |
 | mcpFastTimeServer.command | list | `[]` |  |
-| mcpFastTimeServer.args[0] | string | `"-transport=dual"` |  |
-| mcpFastTimeServer.args[1] | string | `"-listen=0.0.0.0"` |  |
-| mcpFastTimeServer.args[2] | string | `"-port=8080"` |  |
-| mcpFastTimeServer.args[3] | string | `"-log-level=info"` |  |
 | mcpFastTimeServer.ingress.enabled | bool | `true` |  |
 | mcpFastTimeServer.ingress.className | string | `"nginx"` |  |
 | mcpFastTimeServer.ingress.host | string | `"gateway.local"` |  |
@@ -1425,81 +1418,6 @@ When `RATELIMITER_REDIS_URL` is not set during start time, the gateway automatic
 | testing.registration.jwt.username | string | `"admin@example.com"` |  |
 | testing.registration.jwt.expirationMinutes | int | `10080` |  |
 | testing.registration.jwt.secret | string | `"my-test-key-but-now-longer-than-32-bytes"` |  |
-| testing.fastTime.register.enabled | bool | `false` |  |
-| testing.fastTime.register.gatewayName | string | `"fast_time"` |  |
-| testing.fastTime.register.gatewayPath | string | `"/http"` |  |
-| testing.fastTime.register.transport | string | `"STREAMABLEHTTP"` |  |
-| testing.fastTime.register.createVirtualServer | bool | `true` |  |
-| testing.fastTime.register.virtualServerId | string | `"9779b6698cbd4b4995ee04a4fab38737"` |  |
-| testing.fastTime.register.virtualServerName | string | `"Fast Time Server"` |  |
-| testing.fastTime.register.virtualServerDescription | string | `"Virtual server exposing Fast Time MCP tools/resources/prompts"` |  |
-| testing.fastTestServer.enabled | bool | `true` |  |
-| testing.fastTestServer.image.repository | string | `"mcpgateway/fast-test-server"` |  |
-| testing.fastTestServer.image.tag | string | `"latest"` |  |
-| testing.fastTestServer.image.pullPolicy | string | `"IfNotPresent"` |  |
-| testing.fastTestServer.service.type | string | `"ClusterIP"` |  |
-| testing.fastTestServer.service.port | int | `8880` |  |
-| testing.fastTestServer.env.BIND_ADDRESS | string | `"0.0.0.0:8880"` |  |
-| testing.fastTestServer.env.RUST_LOG | string | `"info"` |  |
-| testing.fastTestServer.resources.limits.cpu | string | `"2"` |  |
-| testing.fastTestServer.resources.limits.memory | string | `"1Gi"` |  |
-| testing.fastTestServer.resources.requests.cpu | string | `"500m"` |  |
-| testing.fastTestServer.resources.requests.memory | string | `"128Mi"` |  |
-| testing.fastTestServer.probes.readiness.type | string | `"http"` |  |
-| testing.fastTestServer.probes.readiness.path | string | `"/health"` |  |
-| testing.fastTestServer.probes.readiness.port | int | `8880` |  |
-| testing.fastTestServer.probes.readiness.initialDelaySeconds | int | `10` |  |
-| testing.fastTestServer.probes.readiness.periodSeconds | int | `30` |  |
-| testing.fastTestServer.probes.readiness.timeoutSeconds | int | `5` |  |
-| testing.fastTestServer.probes.readiness.successThreshold | int | `1` |  |
-| testing.fastTestServer.probes.readiness.failureThreshold | int | `3` |  |
-| testing.fastTestServer.probes.liveness.type | string | `"http"` |  |
-| testing.fastTestServer.probes.liveness.path | string | `"/health"` |  |
-| testing.fastTestServer.probes.liveness.port | int | `8880` |  |
-| testing.fastTestServer.probes.liveness.initialDelaySeconds | int | `10` |  |
-| testing.fastTestServer.probes.liveness.periodSeconds | int | `30` |  |
-| testing.fastTestServer.probes.liveness.timeoutSeconds | int | `5` |  |
-| testing.fastTestServer.probes.liveness.successThreshold | int | `1` |  |
-| testing.fastTestServer.probes.liveness.failureThreshold | int | `3` |  |
-| testing.fastTest.register.enabled | bool | `true` |  |
-| testing.fastTest.register.gatewayName | string | `"fast_test"` |  |
-| testing.fastTest.register.gatewayPath | string | `"/mcp"` |  |
-| testing.fastTest.register.transport | string | `"STREAMABLEHTTP"` |  |
-| testing.a2aEchoAgent.enabled | bool | `true` |  |
-| testing.a2aEchoAgent.image.repository | string | `"mcpgateway/a2a-echo-agent"` |  |
-| testing.a2aEchoAgent.image.tag | string | `"latest"` |  |
-| testing.a2aEchoAgent.image.pullPolicy | string | `"IfNotPresent"` |  |
-| testing.a2aEchoAgent.service.type | string | `"ClusterIP"` |  |
-| testing.a2aEchoAgent.service.port | int | `9100` |  |
-| testing.a2aEchoAgent.env.A2A_ECHO_ADDR | string | `"0.0.0.0:9100"` |  |
-| testing.a2aEchoAgent.env.A2A_ECHO_NAME | string | `"a2a-echo-agent"` |  |
-| testing.a2aEchoAgent.env.A2A_ECHO_LOG_LEVEL | string | `"info"` |  |
-| testing.a2aEchoAgent.resources.limits.cpu | string | `"1"` |  |
-| testing.a2aEchoAgent.resources.limits.memory | string | `"256Mi"` |  |
-| testing.a2aEchoAgent.resources.requests.cpu | string | `"250m"` |  |
-| testing.a2aEchoAgent.resources.requests.memory | string | `"64Mi"` |  |
-| testing.a2aEchoAgent.probes.readiness.type | string | `"http"` |  |
-| testing.a2aEchoAgent.probes.readiness.path | string | `"/health"` |  |
-| testing.a2aEchoAgent.probes.readiness.port | int | `9100` |  |
-| testing.a2aEchoAgent.probes.readiness.initialDelaySeconds | int | `10` |  |
-| testing.a2aEchoAgent.probes.readiness.periodSeconds | int | `30` |  |
-| testing.a2aEchoAgent.probes.readiness.timeoutSeconds | int | `5` |  |
-| testing.a2aEchoAgent.probes.readiness.successThreshold | int | `1` |  |
-| testing.a2aEchoAgent.probes.readiness.failureThreshold | int | `3` |  |
-| testing.a2aEchoAgent.probes.liveness.type | string | `"http"` |  |
-| testing.a2aEchoAgent.probes.liveness.path | string | `"/health"` |  |
-| testing.a2aEchoAgent.probes.liveness.port | int | `9100` |  |
-| testing.a2aEchoAgent.probes.liveness.initialDelaySeconds | int | `10` |  |
-| testing.a2aEchoAgent.probes.liveness.periodSeconds | int | `30` |  |
-| testing.a2aEchoAgent.probes.liveness.timeoutSeconds | int | `5` |  |
-| testing.a2aEchoAgent.probes.liveness.successThreshold | int | `1` |  |
-| testing.a2aEchoAgent.probes.liveness.failureThreshold | int | `3` |  |
-| testing.a2a.register.enabled | bool | `true` |  |
-| testing.a2a.register.name | string | `"a2a-echo-agent"` |  |
-| testing.a2a.register.description | string | `"Lightweight A2A echo agent for Kubernetes testing"` |  |
-| testing.a2a.register.endpointPath | string | `"/"` |  |
-| testing.a2a.register.protocolVersion | string | `"0.3.0"` |  |
-| testing.a2a.register.visibility | string | `"public"` |  |
 | testing.locust.enabled | bool | `true` |  |
 | testing.locust.image.repository | string | `"locustio/locust"` |  |
 | testing.locust.image.tag | string | `"latest"` |  |
@@ -1521,27 +1439,6 @@ When `RATELIMITER_REDIS_URL` is not set during start time, the gateway automatic
 | testing.locust.resources.limits.memory | string | `"1Gi"` |  |
 | testing.locust.resources.requests.cpu | string | `"500m"` |  |
 | testing.locust.resources.requests.memory | string | `"128Mi"` |  |
-| benchmark.enabled | bool | `false` |  |
-| benchmark.server.enabled | bool | `true` |  |
-| benchmark.server.image.repository | string | `"mcpgateway/benchmark-server"` |  |
-| benchmark.server.image.tag | string | `"latest"` |  |
-| benchmark.server.image.pullPolicy | string | `"IfNotPresent"` |  |
-| benchmark.server.service.type | string | `"ClusterIP"` |  |
-| benchmark.server.service.startPort | int | `9000` |  |
-| benchmark.server.service.serverCount | int | `10` |  |
-| benchmark.server.transport | string | `"http"` |  |
-| benchmark.server.tools | int | `50` |  |
-| benchmark.server.resources | int | `20` |  |
-| benchmark.server.prompts | int | `10` |  |
-| benchmark.server.resourcesLimits.limits.cpu | string | `"2"` |  |
-| benchmark.server.resourcesLimits.limits.memory | string | `"1Gi"` |  |
-| benchmark.server.resourcesLimits.requests.cpu | string | `"500m"` |  |
-| benchmark.server.resourcesLimits.requests.memory | string | `"256Mi"` |  |
-| benchmark.register.enabled | bool | `true` |  |
-| benchmark.register.gatewayPrefix | string | `"benchmark-"` |  |
-| benchmark.register.transport | string | `"STREAMABLEHTTP"` |  |
-| benchmark.register.startPort | int | `9000` |  |
-| benchmark.register.serverCount | int | `10` |  |
 | tls.enabled | bool | `false` |  |
 | tls.forceHttps | bool | `false` |  |
 | tls.image.repository | string | `"mcpgateway/nginx-cache"` |  |

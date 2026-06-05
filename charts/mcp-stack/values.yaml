@@ -434,8 +434,7 @@ mcpContextForge:
     # Default: strict mode (external endpoints only).
     # Cloud metadata endpoints (169.254.169.254, etc.) are ALWAYS blocked by default.
     # Helm testing registration uses private in-cluster Service DNS names by default:
-    #   fast-time: http://<release>-mcp-fast-time-server:80/http
-    #   fast-test: http://<release>-fast-test-server:8880/mcp
+    #   fast-time: http://<release>-mcp-fast-time-server:80/mcp
     # With strict defaults, those targets are rejected with HTTP 422 during gateway registration.
     SSRF_PROTECTION_ENABLED: "true"            # master switch for SSRF protection
     SSRF_ALLOW_LOCALHOST: "false"              # block localhost/loopback by default
@@ -1477,24 +1476,22 @@ minio:
       memory: 256Mi
 
 ########################################################################
-# MCP-FAST-TIME-SERVER - optional high-performance time server for MCP (go)
-# Provides a fast implementation including SSE and Streamable HTTP
+# MCP-FAST-TIME-SERVER - optional high-performance time server for MCP (Rust)
+# Provides a fast Streamable HTTP implementation for time, echo, and stats tools
 ########################################################################
 mcpFastTimeServer:
   enabled: true            # switch to true to deploy
   replicaCount: 2
   image:
-    repository: ghcr.io/ibm/fast-time-server
+    repository: mcpgateway/fast-time-server
     tag: "latest"
     pullPolicy: IfNotPresent
   port: 8080
-  # Docker Compose parity flags (optional override)
   command: []
-  args:
-    - -transport=dual
-    - -listen=0.0.0.0
-    - -port=8080
-    - -log-level=info
+  args: []
+  env:
+    BIND_ADDRESS: 0.0.0.0:8080
+    RUST_LOG: info
 
   # Ingress example (leave as-is if you already have it)
   ingress:
@@ -1531,14 +1528,13 @@ mcpFastTimeServer:
       successThreshold: 1
       failureThreshold: 8
 
-  # Tiny Go process: ~10 MB runtime footprint
   resources:
     limits:
-      cpu: 50m           # ~5 % of a core
-      memory: 64Mi
+      cpu: "2"
+      memory: 1Gi
     requests:
-      cpu: 25m
-      memory: 10Mi
+      cpu: 500m
+      memory: 128Mi
 
 ########################################################################
 # COMPOSE PARITY - Optional docker-compose profile components
@@ -1839,7 +1835,7 @@ monitoring:
         memory: 256Mi
 
 ########################################################################
-# TESTING PROFILE - fast-test server, A2A echo agent, locust, auto-register
+# TESTING PROFILE - fast-time server, A2A echo agent, locust, auto-register
 ########################################################################
 testing:
   enabled: false
@@ -1861,112 +1857,15 @@ testing:
   fastTime:
     register:
       enabled: false
-      # Uses in-cluster Service URL: http://<release>-mcp-fast-time-server:80/http
+      # Uses in-cluster Service URL: http://<release>-mcp-fast-time-server:80/mcp
       # Requires SSRF_ALLOW_PRIVATE_NETWORKS=true OR SSRF_ALLOWED_NETWORKS to include cluster CIDR.
       gatewayName: fast_time
-      gatewayPath: /http
+      gatewayPath: /mcp
       transport: STREAMABLEHTTP
       createVirtualServer: true
       virtualServerId: 9779b6698cbd4b4995ee04a4fab38737
       virtualServerName: Fast Time Server
       virtualServerDescription: Virtual server exposing Fast Time MCP tools/resources/prompts
-
-  fastTestServer:
-    enabled: true
-    image:
-      repository: mcpgateway/fast-test-server
-      tag: latest
-      pullPolicy: IfNotPresent
-    service:
-      type: ClusterIP
-      port: 8880
-    env:
-      BIND_ADDRESS: 0.0.0.0:8880
-      RUST_LOG: info
-    resources:
-      limits:
-        cpu: "2"
-        memory: 1Gi
-      requests:
-        cpu: 500m
-        memory: 128Mi
-    probes:
-      readiness:
-        type: http
-        path: /health
-        port: 8880
-        initialDelaySeconds: 10
-        periodSeconds: 30
-        timeoutSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-      liveness:
-        type: http
-        path: /health
-        port: 8880
-        initialDelaySeconds: 10
-        periodSeconds: 30
-        timeoutSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-
-  fastTest:
-    register:
-      enabled: true
-      # Uses in-cluster Service URL: http://<release>-fast-test-server:8880/mcp
-      # Requires SSRF_ALLOW_PRIVATE_NETWORKS=true OR SSRF_ALLOWED_NETWORKS to include cluster CIDR.
-      gatewayName: fast_test
-      gatewayPath: /mcp
-      transport: STREAMABLEHTTP
-
-  a2aEchoAgent:
-    enabled: true
-    image:
-      repository: mcpgateway/a2a-echo-agent
-      tag: latest
-      pullPolicy: IfNotPresent
-    service:
-      type: ClusterIP
-      port: 9100
-    env:
-      A2A_ECHO_ADDR: 0.0.0.0:9100
-      A2A_ECHO_NAME: a2a-echo-agent
-      A2A_ECHO_LOG_LEVEL: info
-    resources:
-      limits:
-        cpu: "1"
-        memory: 256Mi
-      requests:
-        cpu: 250m
-        memory: 64Mi
-    probes:
-      readiness:
-        type: http
-        path: /health
-        port: 9100
-        initialDelaySeconds: 10
-        periodSeconds: 30
-        timeoutSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-      liveness:
-        type: http
-        path: /health
-        port: 9100
-        initialDelaySeconds: 10
-        periodSeconds: 30
-        timeoutSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-
-  a2a:
-    register:
-      enabled: true
-      name: a2a-echo-agent
-      description: Lightweight A2A echo agent for Kubernetes testing
-      endpointPath: /
-      protocolVersion: 0.3.0
-      visibility: public
 
   locust:
     enabled: true
@@ -2016,41 +1915,6 @@ testing:
       requests:
         cpu: 500m
         memory: 128Mi
-
-########################################################################
-# BENCHMARK PROFILE - benchmark MCP server + auto registration
-########################################################################
-benchmark:
-  enabled: false
-
-  server:
-    enabled: true
-    image:
-      repository: mcpgateway/benchmark-server
-      tag: latest
-      pullPolicy: IfNotPresent
-    service:
-      type: ClusterIP
-      startPort: 9000
-      serverCount: 10
-    transport: http
-    tools: 50
-    resources: 20
-    prompts: 10
-    resourcesLimits:
-      limits:
-        cpu: "2"
-        memory: 1Gi
-      requests:
-        cpu: 500m
-        memory: 256Mi
-
-  register:
-    enabled: true
-    gatewayPrefix: benchmark-
-    transport: STREAMABLEHTTP
-    startPort: 9000
-    serverCount: 10
 
 ########################################################################
 # TLS PROFILE - TLS-enabled nginx frontend and cert management

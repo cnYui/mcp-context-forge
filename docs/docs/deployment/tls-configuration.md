@@ -125,8 +125,6 @@ The TLS profile works alongside other Docker Compose profiles:
 # TLS + Monitoring (Prometheus, Grafana, etc.)
 docker compose --profile tls --profile monitoring up -d --scale nginx=0
 
-# TLS + Benchmark servers
-docker compose --profile tls --profile benchmark up -d --scale nginx=0
 ```
 
 !!! note "Scaling nginx to 0"

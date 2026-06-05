@@ -177,19 +177,19 @@ BENCH_C ?= 200
 bench: bench-echo bench-time
 
 bench-echo:
-	@command -v hey >/dev/null || { echo '"hey" not installed: go install github.com/rakyll/hey@latest'; exit 1; }
+	@command -v hey >/dev/null || { echo '"hey" not installed: install hey from https://github.com/rakyll/hey/releases'; exit 1; }
 	@echo "$(C_BLUE)➜ Benchmarking /api/echo ($(BENCH_N) requests, $(BENCH_C) concurrent)...$(C_RESET)"
 	@hey -m POST -T 'application/json' \
 	     -d '{"message":"hello"}' \
 	     -n $(BENCH_N) -c $(BENCH_C) http://localhost:9080/api/echo
 
 bench-time:
-	@command -v hey >/dev/null || { echo '"hey" not installed: go install github.com/rakyll/hey@latest'; exit 1; }
+	@command -v hey >/dev/null || { echo '"hey" not installed: install hey from https://github.com/rakyll/hey/releases'; exit 1; }
 	@echo "$(C_BLUE)➜ Benchmarking /api/time ($(BENCH_N) requests, $(BENCH_C) concurrent)...$(C_RESET)"
 	@hey -n $(BENCH_N) -c $(BENCH_C) 'http://localhost:9080/api/time?tz=America/New_York'
 
 bench-quick:
-	@command -v hey >/dev/null || { echo '"hey" not installed: go install github.com/rakyll/hey@latest'; exit 1; }
+	@command -v hey >/dev/null || { echo '"hey" not installed: install hey from https://github.com/rakyll/hey/releases'; exit 1; }
 	@echo "$(C_BLUE)➜ Quick benchmark /api/echo (100K requests)...$(C_RESET)"
 	@hey -m POST -T 'application/json' \
 	     -d '{"message":"hello"}' \

@@ -322,7 +322,7 @@ Install one of:
 brew install hey            # macOS
 sudo apt install hey         # Debian/Ubuntu
 # or build from source
-go install github.com/rakyll/hey@latest  # $GOPATH/bin must be in PATH
+install hey from https://github.com/rakyll/hey/releases
 ```
 
 ### 4.2 Sample load-test script (`tests/hey.sh`)

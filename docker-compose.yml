@@ -16,9 +16,7 @@
 #  Default (no profile):  Gateway + Postgres + Redis + Nginx (HTTP only)
 #  --profile sso:         Adds Keycloak + testing + inspector (full dev SSO stack, via docker-compose.sso.yml)
 #  --profile monitoring:  Adds Prometheus, Grafana, Loki, exporters
-#  --profile testing:     Adds Locust (web UI), A2A echo agent, fast_test_server + auto-registration
-#  --profile resilience:  Adds slow_time_server for timeout, circuit breaker, and resilience testing
-#  --profile benchmark:   Adds benchmark MCP servers for load testing
+#  --profile testing:     Adds Locust (web UI), A2A echo agent, fast_time_server + auto-registration
 #  --profile tls:         Enables HTTPS via nginx_tls (auto-generates certs)
 #  --profile inspector:   Adds MCP Inspector client (http://localhost:6274)
 #
@@ -1473,599 +1471,11 @@ services:
       - HTTP_USER=admin
       - HTTP_PASSWORD=changeme
     profiles: ["monitoring"]
-
-  # # ──────────────────────────────────────────────────────────────────────
-  # # Redis Insight - a powerful Redis GUI (recently updated)
-  # # ──────────────────────────────────────────────────────────────────────
-  # redis_insight:                    # 🔧 Redis Insight GUI
-  #   image: redis/redisinsight:latest
-  #   container_name: redisinsight
-  #   restart: unless-stopped
-  #   networks: [mcpnet]
-  #   ports:
-  #     - "5540:5540"                 # Redis Insight UI (default 5540)
-  #   depends_on:          # Default stack: Postgres + Redis
-  #     redis:
-  #       condition: service_started
-
-  #   # ──────────────────────────────────────────────────────────────────────
-  #   # Persist data (config, logs, history) between restarts
-  #   # ──────────────────────────────────────────────────────────────────────
-  #   # volumes:
-  #   #   - ./redisinsight_data:/data
-  #   volumes:
-  #     - redisinsight_data:/data  # <- persist data in named volume
-
-  #   # ──────────────────────────────────────────────────────────────────────
-  #   # Preconfigure Redis connection(s) via env vars
-  #   # ──────────────────────────────────────────────────────────────────────
-  #   environment:
-  #     # Single connection (omit "*" since only one):
-  #     - RI_REDIS_HOST=redis         # <- your Redis hostname
-  #     - RI_REDIS_PORT=6379          # <- your Redis port
-  #     - RI_REDIS_USERNAME=default   # <- ACL/username (Redis 6+)
-  #     #- RI_REDIS_PASSWORD=changeme  # <- Redis AUTH password
-  #     #- RI_REDIS_TLS=true           # <- enable TLS
-
-  #     # Optional: validate self-signed CA instead of trusting all:
-  #     # - RI_REDIS_TLS_CA_PATH=/certs/selfsigned.crt
-  #     # - RI_REDIS_TLS_CERT_PATH=/certs/client.crt
-  #     # - RI_REDIS_TLS_KEY_PATH=/certs/client.key
-  #     # - RI_REDIS_TLS=true           # (already set above)
-
-  #     # ──────────────────────────────────────────────────────────────────
-  #     # Core Redis Insight settings
-  #     # ──────────────────────────────────────────────────────────────────
-  #     - RI_APP_HOST=0.0.0.0          # <- listen on all interfaces
-  #     - RI_APP_PORT=5540             # <- UI port (container-side)
-
-
-###############################################################################
-#  OPTIONAL MCP SERVERS - drop-in helpers the Gateway can call
-###############################################################################
-
-  ###############################################################################
-  # Fast Time Server - High-performance time/timezone service for MCP
-  # Uses pre-built image by default. On ARM64, build locally:
-  #   FAST_TIME_IMAGE=mcpgateway/fast-time-server:local docker compose build fast_time_server
-  ###############################################################################
   fast_time_server:
-    image: ${FAST_TIME_IMAGE:-ghcr.io/ibm/fast-time-server:latest}
     build:
-      context: ./mcp-servers/go/fast-time-server
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    networks: [mcpnet]
-    ports:
-      - "8888:8080"    # Map host port 8888 to container port 8080
-    # Use dual mode for both SSE (/sse) and Streamable HTTP (/http) endpoints
-    command: ["-transport=dual", "-listen=0.0.0.0", "-port=8080", "-log-level=info"]
-
-  ###############################################################################
-  # Auto-registration service - registers fast_time_server with gateway
-  ###############################################################################
-  register_fast_time:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    networks: [mcpnet]
-    depends_on:
-      gateway:
-        condition: service_healthy
-      fast_time_server:
-        condition: service_started
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-
-    # This is a one-shot container that exits after registration
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -e
-        echo "Using latest gateway image with current JWT utility..."
-
-        echo "Waiting for services to be ready..."
-
-        # Wait for gateway to be ready using Python
-        python3 -c "
-        import time
-        import urllib.request
-        import urllib.error
-
-        for i in range(1, 61):
-            try:
-                with urllib.request.urlopen('http://gateway:4444/health', timeout=2) as response:
-                    if response.status == 200:
-                        print('✅ gateway is healthy')
-                        break
-            except:
-                pass
-            print(f'Waiting for gateway... ({i}/60)')
-            time.sleep(2)
-        else:
-            print('❌ Gateway failed to become healthy')
-            exit(1)
-        "
-
-        # Wait for fast_time_server to be ready using Python
-        python3 -c "
-        import time
-        import urllib.request
-        import urllib.error
-
-        for i in range(1, 31):
-            try:
-                with urllib.request.urlopen('http://fast_time_server:8080/health', timeout=2) as response:
-                    if response.status == 200:
-                        print('✅ fast_time_server is healthy')
-                        break
-            except:
-                pass
-            print(f'Waiting for fast_time_server... ({i}/30)')
-            time.sleep(2)
-        else:
-            print('❌ Fast time server failed to become healthy')
-            exit(1)
-        "
-
-        echo "Generating JWT token..."
-        echo "Environment: JWT_SECRET_KEY=$$JWT_SECRET_KEY"
-        echo "Running: python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --admin --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256"
-        # Only capture stdout (the token), let warnings go to stderr
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --admin --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
-        echo "Generated token: $$MCPGATEWAY_BEARER_TOKEN"
-
-        # Decode the token to verify it has expiration
-        echo "Decoding token to verify claims..."
-        python3 -m mcpgateway.utils.create_jwt_token --decode "$$MCPGATEWAY_BEARER_TOKEN" 2>/dev/null || echo "Failed to decode token"
-
-        # Wait for authenticated gateway readiness. /health goes green before the
-        # admin/bootstrap path is fully ready for authenticated registration calls.
-        echo "Waiting for authenticated gateway readiness..."
-
-        # Use Python to make HTTP requests
-        python3 -c "
-        import urllib.request
-        import urllib.error
-        import json
-        import sys
-        import os
-        import time
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-
-        def api_request(method, path, data=None):
-            '''Helper to make authenticated API requests.'''
-            url = f'http://gateway:4444{path}'
-            req = urllib.request.Request(url, method=method)
-            req.add_header('Authorization', f'Bearer {token}')
-            req.add_header('Content-Type', 'application/json')
-            if data:
-                req.data = json.dumps(data).encode('utf-8')
-            with urllib.request.urlopen(req) as response:
-                return json.loads(response.read().decode('utf-8'))
-
-        def api_request_with_retry(method, path, data=None, retries=30, delay=2, retry_statuses=(401, 502, 503)):
-            '''Retry authenticated API requests while gateway workers settle.'''
-            for attempt in range(1, retries + 1):
-                try:
-                    return api_request(method, path, data)
-                except urllib.error.HTTPError as exc:
-                    if exc.code in retry_statuses and attempt < retries:
-                        print(f'Retrying {method} {path} after HTTP {exc.code} ({attempt}/{retries})')
-                        time.sleep(delay)
-                        continue
-                    raise
-                except Exception:
-                    if attempt < retries:
-                        print(f'Retrying {method} {path} after transient error ({attempt}/{retries})')
-                        time.sleep(delay)
-                        continue
-                    raise
-
-        print('Checking authenticated gateway readiness...')
-        for i in range(1, 61):
-            try:
-                gateways = api_request('GET', '/gateways')
-                print(f'✅ Authenticated gateway readiness confirmed ({len(gateways)} gateways visible)')
-                break
-            except urllib.error.HTTPError as exc:
-                print(f'Authenticated readiness not ready yet ({i}/60): HTTP {exc.code}')
-            except Exception as exc:
-                print(f'Authenticated readiness not ready yet ({i}/60): {exc}')
-            time.sleep(2)
-        else:
-            print('❌ Gateway authenticated readiness check failed')
-            sys.exit(1)
-
-        # Register fast_time_server with gateway using Streamable HTTP transport
-        print('Registering fast_time_server with gateway (Streamable HTTP)...')
-
-        # First check if gateway already exists. Reuse it on reruns so
-        # repeated compose up operations stay idempotent.
-        gateway_id = None
-        try:
-            gateways = api_request_with_retry('GET', '/gateways')
-            for gw in gateways:
-                if gw.get('name') == 'fast_time':
-                    gateway_id = gw['id']
-                    print(f'Reusing existing gateway {gateway_id}')
-                    break
-        except Exception as e:
-            print(f'Note: Could not check existing gateway: {e}')
-
-        # Delete existing virtual server if present (using fixed ID)
-        VIRTUAL_SERVER_ID = '9779b6698cbd4b4995ee04a4fab38737'
-        try:
-            api_request_with_retry('DELETE', f'/servers/{VIRTUAL_SERVER_ID}', retry_statuses=(401, 502, 503))
-            print(f'Deleted existing virtual server {VIRTUAL_SERVER_ID}')
-        except Exception as e:
-            print(f'Note: No existing virtual server to delete (or error: {e})')
-
-        # Register the gateway when it is not already present with synced tools.
-        if gateway_id is None:
-            try:
-                result = api_request_with_retry('POST', '/gateways', {
-                    'name': 'fast_time',
-                    'url': 'http://fast_time_server:8080/http',
-                    'transport': 'STREAMABLEHTTP'
-                })
-                print(f'Registration response: {result}')
-                if 'id' in result:
-                    gateway_id = result['id']
-                    print(f'✅ Successfully registered fast_time_server (gateway_id: {gateway_id})')
-                else:
-                    print('❌ Registration failed - no ID in response')
-                    sys.exit(1)
-            except Exception as e:
-                print(f'❌ Registration failed: {e}')
-                sys.exit(1)
-
-        # Force immediate discovery before polling for synced catalog entries.
-        try:
-            refresh_result = api_request_with_retry(
-                'POST',
-                f'/gateways/{gateway_id}/tools/refresh?include_resources=true&include_prompts=true',
-                retries=20,
-                delay=2,
-                retry_statuses=(401, 409, 502, 503),
-            )
-            print(f'Refresh response: {refresh_result}')
-        except Exception as e:
-            print(f'Note: manual refresh did not complete immediately: {e}')
-
-        # Wait for tools to be synced from the gateway
-        print('Waiting for tools/resources/prompts to sync...')
-        for i in range(60):
-            time.sleep(1)
-            try:
-                tools = api_request('GET', '/tools')
-                # Filter tools from fast_time gateway (note: camelCase gatewayId)
-                fast_time_tools = [t for t in tools if t.get('gatewayId') == gateway_id]
-                if fast_time_tools:
-                    print(f'Found {len(fast_time_tools)} tools from fast_time gateway')
-                    break
-            except Exception as e:
-                pass
-            print(f'Waiting for sync... ({i+1}/60)')
-        else:
-            print('❌ Tools from fast_time gateway did not sync in time')
-            sys.exit(1)
-
-        # Fetch all tools, resources, and prompts for the fast_time gateway only.
-        # API payloads may expose either gatewayId (camelCase) or gateway_id (snake_case)
-        # depending on the serializer path, so accept both.
-        tool_ids = []
-        resource_ids = []
-        prompt_ids = []
-
-        try:
-            tools = api_request('GET', '/tools')
-            # Get tools from the fast_time gateway
-            tool_ids = [t['id'] for t in tools if t.get('gatewayId') == gateway_id]
-            print(f'Found tools: {[t[\"name\"] for t in tools if t.get(\"gatewayId\") == gateway_id]}')
-        except Exception as e:
-            print(f'Failed to fetch tools: {e}')
-
-        if not tool_ids:
-            print('❌ fast_time gateway sync completed without any tools; aborting virtual server creation')
-            sys.exit(1)
-
-        try:
-            resources = api_request('GET', '/resources')
-            fast_time_resources = [r for r in resources if r.get('gatewayId') == gateway_id or r.get('gateway_id') == gateway_id]
-            resource_ids = [r['id'] for r in fast_time_resources]
-            print(f'Found resources: {[r[\"name\"] for r in fast_time_resources]}')
-        except Exception as e:
-            print(f'Failed to fetch resources: {e}')
-
-        try:
-            prompts = api_request('GET', '/prompts')
-            fast_time_prompts = [p for p in prompts if p.get('gatewayId') == gateway_id or p.get('gateway_id') == gateway_id]
-            prompt_ids = [p['id'] for p in fast_time_prompts]
-            print(f'Found prompts: {[p[\"name\"] for p in fast_time_prompts]}')
-        except Exception as e:
-            print(f'Failed to fetch prompts: {e}')
-
-        # Create virtual server with all tools, resources, and prompts
-        print('Creating virtual server...')
-        try:
-            # API expects payload wrapped in 'server' key
-            # Use fixed UUID for consistent server ID across restarts
-            server_payload = {
-                'server': {
-                    'id': '9779b6698cbd4b4995ee04a4fab38737',
-                    'name': 'Fast Time Server',
-                    'description': 'Virtual server exposing Fast Time MCP tools, resources, and prompts',
-                    'associated_tools': tool_ids,
-                    'associated_resources': resource_ids,
-                    'associated_prompts': prompt_ids
-                }
-            }
-            result = api_request_with_retry('POST', '/servers', server_payload)
-            print(f'Virtual server created: {result}')
-            print(f'✅ Successfully created virtual server with {len(tool_ids)} tools, {len(resource_ids)} resources, {len(prompt_ids)} prompts')
-        except Exception as e:
-            print(f'❌ Failed to create virtual server: {e}')
-            sys.exit(1)
-        "
-
-        # Write the bearer token to a file for load testing
-        echo "Writing bearer token to /tmp/gateway-token.txt..."
-        echo "$$MCPGATEWAY_BEARER_TOKEN" > /tmp/gateway-token.txt
-        echo "Token written to /tmp/gateway-token.txt"
-
-        echo "✅ Setup complete!"
-
-  ###############################################################################
-  # Auto-registration service - registers fast_time_server SSE with gateway
-  # Provides always-available SSE transport for manual testing and E2E RBAC tests.
-  # RBAC tests (test_mcp_rbac_transport.py) create additional team/private servers
-  # dynamically; this service only registers the base public SSE gateway + server.
-  ###############################################################################
-  register_fast_time_sse:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    networks: [mcpnet]
-    depends_on:
-      register_fast_time:
-        condition: service_completed_successfully
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -e
-        echo "Registering fast_time_server SSE transport with gateway..."
-
-        # Generate JWT token
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --admin --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
-
-        python3 -c "
-        import json
-        import os
-        import sys
-        import time
-        import urllib.request
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-
-        def api_request(method, path, data=None):
-            url = f'http://gateway:4444{path}'
-            req = urllib.request.Request(url, method=method)
-            req.add_header('Authorization', f'Bearer {token}')
-            req.add_header('Content-Type', 'application/json')
-            if data:
-                req.data = json.dumps(data).encode('utf-8')
-            with urllib.request.urlopen(req) as response:
-                return json.loads(response.read().decode('utf-8'))
-
-        # Delete existing SSE gateway if present
-        try:
-            gateways = api_request('GET', '/gateways')
-            for gw in gateways:
-                if gw.get('name') == 'fast_time_sse':
-                    print(f'Found existing SSE gateway {gw[\"id\"]}, deleting...')
-                    api_request('DELETE', f'/gateways/{gw[\"id\"]}')
-        except Exception as e:
-            print(f'Note: {e}')
-
-        # Delete existing SSE virtual server if present (using fixed ID)
-        SSE_VIRTUAL_SERVER_ID = 'a88e2c3f5d7b4a9e8f1c6d2e3b4a5f6e'
-        try:
-            api_request('DELETE', f'/servers/{SSE_VIRTUAL_SERVER_ID}')
-            print(f'Deleted existing SSE virtual server {SSE_VIRTUAL_SERVER_ID}')
-        except Exception as e:
-            print(f'Note: No existing SSE virtual server to delete (or error: {e})')
-
-        # Register SSE gateway
-        print('Registering SSE gateway...')
-        try:
-            result = api_request('POST', '/gateways', {
-                'name': 'fast_time_sse',
-                'url': 'http://fast_time_server:8080/sse',
-                'transport': 'SSE'
-            })
-            gateway_id = result.get('id')
-            print(f'SSE gateway registered (id: {gateway_id})')
-        except Exception as e:
-            print(f'Failed to register SSE gateway: {e}')
-            sys.exit(1)
-
-        # Wait for tool sync
-        print('Waiting for SSE tools to sync...')
-        for i in range(30):
-            time.sleep(1)
-            try:
-                tools = api_request('GET', '/tools')
-                sse_tools = [t for t in tools if t.get('gatewayId') == gateway_id]
-                if sse_tools:
-                    print(f'Found {len(sse_tools)} SSE tools')
-                    break
-            except Exception:
-                pass
-            print(f'Waiting for SSE sync... ({i+1}/30)')
-        else:
-            print('Warning: No SSE tools synced, continuing anyway...')
-
-        # Fetch SSE tools/resources/prompts
-        tool_ids = []
-        resource_ids = []
-        prompt_ids = []
-
-        try:
-            tools = api_request('GET', '/tools')
-            tool_ids = [t['id'] for t in tools if t.get('gatewayId') == gateway_id]
-            print(f'SSE tools: {[t[\"name\"] for t in tools if t.get(\"gatewayId\") == gateway_id]}')
-        except Exception as e:
-            print(f'Failed to fetch SSE tools: {e}')
-
-        try:
-            resources = api_request('GET', '/resources')
-            resource_ids = [r['id'] for r in resources if r.get('gatewayId') == gateway_id]
-        except Exception as e:
-            print(f'Failed to fetch SSE resources: {e}')
-
-        try:
-            prompts = api_request('GET', '/prompts')
-            prompt_ids = [p['id'] for p in prompts if p.get('gatewayId') == gateway_id]
-        except Exception as e:
-            print(f'Failed to fetch SSE prompts: {e}')
-
-        # Create virtual server
-        print('Creating SSE virtual server...')
-        try:
-            server_payload = {
-                'server': {
-                    'id': SSE_VIRTUAL_SERVER_ID,
-                    'name': 'Fast Time SSE Server',
-                    'description': 'Virtual server exposing Fast Time MCP tools via SSE transport',
-                    'associated_tools': tool_ids,
-                    'associated_resources': resource_ids,
-                    'associated_prompts': prompt_ids
-                }
-            }
-            result = api_request('POST', '/servers', server_payload)
-            print(f'SSE virtual server created: {result}')
-            print(f'Successfully created SSE virtual server with {len(tool_ids)} tools')
-        except Exception as e:
-            print(f'Failed to create SSE virtual server: {e}')
-            sys.exit(1)
-        "
-
-        echo "SSE registration complete!"
-
-  ###############################################################################
-  # Slow Time Server - Configurable-latency MCP server for timeout/resilience testing
-  # Introduces artificial latency on every tool call. Use for testing gateway
-  # timeout enforcement, circuit breaker behaviour, and session pool resilience.
-  # Usage: docker compose --profile resilience up -d
-  ###############################################################################
-  slow_time_server:
-    build:
-      context: ./mcp-servers/go/slow-time-server
-      dockerfile: Dockerfile
-    image: mcpgateway/slow-time-server:latest
-    restart: unless-stopped
-    networks: [mcpnet]
-    ports:
-      - "8889:8081"    # Map host port 8889 to container port 8081
-    environment:
-      - DEFAULT_LATENCY=${SLOW_TIME_LATENCY:-5s}
-      - FAILURE_RATE=${SLOW_TIME_FAILURE_RATE:-0.0}
-    command: ["-transport=dual", "-listen=0.0.0.0", "-port=8081", "-log-level=info"]
-    healthcheck:
-      test: ["CMD", "/slow-time-server", "-health", "-port=8081"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 64M
-    profiles: ["resilience"]
-
-  ###############################################################################
-  # Auto-registration service - registers slow_time_server with gateway
-  ###############################################################################
-  register_slow_time:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    networks: [mcpnet]
-    depends_on:
-      gateway:
-        condition: service_healthy
-      slow_time_server:
-        condition: service_healthy
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Registering slow_time_server with gateway..."
-
-        # Generate JWT token
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --admin --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
-
-        python3 -c "
-        import urllib.request
-        import json
-        import os
-        import sys
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-
-        def api_request(method, path, data=None):
-            url = f'http://gateway:4444{path}'
-            req = urllib.request.Request(url, method=method)
-            req.add_header('Authorization', f'Bearer {token}')
-            req.add_header('Content-Type', 'application/json')
-            if data:
-                req.data = json.dumps(data).encode('utf-8')
-            with urllib.request.urlopen(req) as response:
-                return json.loads(response.read().decode('utf-8'))
-
-        # Delete existing gateway if present
-        try:
-            gateways = api_request('GET', '/gateways')
-            for gw in gateways:
-                if gw.get('name') == 'slow_time':
-                    print(f'Found existing gateway {gw[\"id\"]}, deleting...')
-                    api_request('DELETE', f'/gateways/{gw[\"id\"]}')
-        except Exception as e:
-            print(f'Note: {e}')
-
-        # Register the gateway
-        try:
-            result = api_request('POST', '/gateways', {
-                'name': 'slow_time',
-                'url': 'http://slow_time_server:8081/http',
-                'transport': 'STREAMABLEHTTP'
-            })
-            gateway_id = result.get('id')
-            print(f'✅ Registered slow_time_server (gateway_id: {gateway_id})')
-        except Exception as e:
-            print(f'❌ Registration failed: {e}')
-            exit(1)
-        "
-        echo "✅ Registration complete!"
-    profiles: ["resilience"]
-
-  ###############################################################################
-  # Fast Test Server - Ultra-fast Rust MCP server for performance testing
-  # Provides: echo, get_system_time, get_stats tools via MCP Streamable HTTP
-  # Also exposes REST API endpoints for baseline comparison
-  # Usage: docker compose --profile testing up -d
-  ###############################################################################
-  fast_test_server:
-    build:
-      context: ./mcp-servers/rust/fast-test-server
+      context: ./mcp-servers/rust/fast-time-server
       dockerfile: Containerfile
-    image: mcpgateway/fast-test-server:latest
+    image: mcpgateway/fast-time-server:latest
     restart: unless-stopped
     networks: [mcpnet]
     ports:
@@ -2102,15 +1512,15 @@ services:
     profiles: ["testing", "monitoring", "sso"]
 
   ###############################################################################
-  # Auto-registration service - registers fast_test_server with gateway
+  # Auto-registration service - registers fast_time_server with gateway
   ###############################################################################
-  register_fast_test:
+  register_fast_time:
     image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
     networks: [mcpnet]
     depends_on:
       gateway:
         condition: service_healthy
-      fast_test_server:
+      fast_time_server:
         condition: service_healthy
     environment:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
@@ -2119,7 +1529,7 @@ services:
     command:
       - |
         set -e
-        echo "Registering fast_test_server with gateway..."
+        echo "Registering fast_time_server with gateway..."
 
         # Generate JWT token
         export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --admin --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
@@ -2180,7 +1590,7 @@ services:
         try:
             gateways = api_request_with_retry('GET', '/gateways')
             for gw in gateways:
-                if gw.get('name') == 'fast_test':
+                if gw.get('name') == 'fast_time':
                     print(f'Deleting existing gateway {gw[\"id\"]}...')
                     api_request_with_retry('DELETE', f'/gateways/{gw[\"id\"]}')
         except Exception as e:
@@ -2198,12 +1608,12 @@ services:
         # Register the gateway
         try:
             result = api_request_with_retry('POST', '/gateways', {
-                'name': 'fast_test',
-                'url': 'http://fast_test_server:8880/mcp',
+                'name': 'fast_time',
+                'url': 'http://fast_time_server:8880/mcp',
                 'transport': 'STREAMABLEHTTP'
             })
             gateway_id = result.get('id', '')
-            print(f'✅ Registered fast_test_server (gateway_id: {gateway_id})')
+            print(f'✅ Registered fast_time_server (gateway_id: {gateway_id})')
         except Exception as e:
             print(f'❌ Registration failed: {e}')
             exit(1)
@@ -2214,9 +1624,9 @@ services:
             time.sleep(1)
             try:
                 tools = api_request_with_retry('GET', '/tools')
-                fast_test_tools = [t for t in tools if t.get('gatewayId') == gateway_id]
-                if fast_test_tools:
-                    print(f'Found {len(fast_test_tools)} tools from fast_test gateway')
+                fast_time_tools = [t for t in tools if t.get('gatewayId') == gateway_id]
+                if fast_time_tools:
+                    print(f'Found {len(fast_time_tools)} tools from fast_time gateway')
                     break
             except Exception:
                 pass
@@ -2224,7 +1634,7 @@ services:
         else:
             print('Warning: No tools synced, continuing anyway...')
 
-        # Collect tool IDs from the fast_test gateway
+        # Collect tool IDs from the fast_time gateway
         tool_ids = []
         try:
             tools = api_request_with_retry('GET', '/tools')
@@ -2239,8 +1649,8 @@ services:
             server_payload = {
                 'server': {
                     'id': VIRTUAL_SERVER_ID,
-                    'name': 'Fast Test Server',
-                    'description': 'Virtual server exposing Fast Test MCP tools (echo, time, stats)',
+                    'name': 'Fast Time Server',
+                    'description': 'Virtual server exposing Fast Time MCP tools (echo, time, stats)',
                     'associated_tools': tool_ids,
                     'associated_resources': [],
                     'associated_prompts': []
@@ -2254,114 +1664,6 @@ services:
         "
         echo "✅ Registration complete!"
     profiles: ["testing", "monitoring", "sso"]
-
-  ###############################################################################
-  # A2A Echo Agent - Lightweight A2A-compatible agent for end-to-end testing
-  # Provides a simple JSON-RPC endpoint and A2A discovery card (no LLM dependency)
-  # Usage: docker compose --profile testing up -d
-  ###############################################################################
-  a2a_echo_agent:
-    build:
-      context: ./a2a-agents/go/a2a-echo-agent
-      dockerfile: Dockerfile
-    image: mcpgateway/a2a-echo-agent:latest
-    restart: unless-stopped
-    networks: [mcpnet]
-    ports:
-      - "9100:9100"
-    environment:
-      - A2A_ECHO_ADDR=0.0.0.0:9100
-      - A2A_ECHO_NAME=a2a-echo-agent
-      - A2A_ECHO_PROTOCOL_VERSION=1.0.0
-      - A2A_ECHO_LOG_LEVEL=info
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9100/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 64M
-    profiles: ["testing", "sso"]
-
-  ###############################################################################
-  # Auto-registration service - registers a2a_echo_agent with gateway
-  ###############################################################################
-  register_a2a_echo:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    networks: [mcpnet]
-    depends_on:
-      gateway:
-        condition: service_healthy
-      a2a_echo_agent:
-        condition: service_healthy
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Registering a2a_echo_agent with gateway..."
-
-        # Generate JWT token (stdout only)
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
-
-        python3 -c "
-        import json
-        import os
-        import urllib.request
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-
-        def api_request(method, path, data=None):
-            url = f'http://gateway:4444{path}'
-            body = json.dumps(data).encode('utf-8') if data is not None else None
-            req = urllib.request.Request(url, data=body, method=method)
-            req.add_header('Authorization', f'Bearer {token}')
-            req.add_header('Content-Type', 'application/json')
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode('utf-8'))
-
-        # Delete existing agent if present
-        try:
-            agents = api_request('GET', '/a2a')
-            items = agents if isinstance(agents, list) else agents.get('agents', agents.get('items', []))
-            for a in items:
-                if a.get('name') == 'a2a-echo-agent':
-                    print(f'Deleting existing A2A agent {a.get(\"id\")}...')
-                    api_request('DELETE', f'/a2a/{a.get(\"id\")}')
-        except Exception as e:
-            print(f'Note: {e}')
-
-        # Register agent (JSON-RPC endpoint at /)
-        payload = {
-            'agent': {
-                'name': 'a2a-echo-agent',
-                'description': 'Lightweight A2A echo agent for docker-compose testing',
-                'endpoint_url': 'http://a2a_echo_agent:9100/',
-                'agent_type': 'jsonrpc',
-                'protocol_version': '1.0.0',
-                'capabilities': {'echo': True, 'transport': 'JSONRPC', 'supportsLegacyInterop': True},
-                'tags': ['testing', 'a2a', 'echo']
-            },
-            'visibility': 'public'
-        }
-
-        result = api_request('POST', '/a2a', payload)
-        print(f'✅ Registered a2a_echo_agent: {result.get(\"id\", \"unknown\")}')
-        "
-        echo "✅ Registration complete!"
-    profiles: ["testing", "sso"]
-
-  ###############################################################################
-  # Locust JWT token generator - produces a gateway JWT for containerized load tests
-  ###############################################################################
   locust_token:
     image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
     networks: [mcpnet]
@@ -2490,123 +1792,6 @@ services:
           cpus: '0.5'
           memory: 128M
     profiles: ["testing", "sso"]
-
-  ###############################################################################
-  # Benchmark Server - Multi-server MCP benchmark tool
-  # Spawns multiple lightweight MCP servers for load testing
-  # Usage: make benchmark-up (or: docker compose --profile benchmark up -d)
-  #
-  # Environment variables:
-  #   BENCHMARK_SERVER_COUNT - Number of servers to spawn (default: 10)
-  #   BENCHMARK_START_PORT   - Starting port number (default: 9000)
-  ###############################################################################
-  benchmark_server:
-    build:
-      context: ./mcp-servers/go/benchmark-server
-      dockerfile: Dockerfile
-    image: mcpgateway/benchmark-server:latest
-    restart: unless-stopped
-    networks: [mcpnet]
-    command:
-      - "-transport=http"
-      - "-server-count=${BENCHMARK_SERVER_COUNT:-10}"
-      - "-start-port=${BENCHMARK_START_PORT:-9000}"
-      - "-tools=50"
-      - "-resources=20"
-      - "-prompts=10"
-    ports:
-      # Port range supports up to 100 servers (9000-9099)
-      # Actual servers spawned controlled by BENCHMARK_SERVER_COUNT
-      - "9000-9099:9000-9099"
-    # Note: No healthcheck - scratch-based Go image has no shell
-    # Verify health via: curl http://localhost:9000/health
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 256M
-    profiles: ["benchmark"]
-
-  ###############################################################################
-  # Auto-registration service - registers benchmark servers with gateway
-  # Uses BENCHMARK_SERVER_COUNT and BENCHMARK_START_PORT environment variables
-  ###############################################################################
-  register_benchmark:
-    image: ${IMAGE_LOCAL:-mcpgateway/mcpgateway:latest}
-    networks: [mcpnet]
-    depends_on:
-      gateway:
-        condition: service_healthy
-      benchmark_server:
-        condition: service_started
-    environment:
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-my-test-key-but-now-longer-than-32-bytes}
-      - BENCHMARK_SERVER_COUNT=${BENCHMARK_SERVER_COUNT:-10}
-      - BENCHMARK_START_PORT=${BENCHMARK_START_PORT:-9000}
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Registering benchmark servers with gateway..."
-
-        # Wait for benchmark servers to start (no healthcheck available)
-        echo "Waiting for benchmark servers to start..."
-        sleep 5
-
-        # Generate JWT token
-        export MCPGATEWAY_BEARER_TOKEN=$$(python3 -m mcpgateway.utils.create_jwt_token --username admin@example.com --exp 10080 --secret $$JWT_SECRET_KEY --algo HS256 2>/dev/null)
-
-        # Register benchmark servers using environment variables
-        python3 -c "
-        import urllib.request
-        import json
-        import os
-
-        token = os.environ.get('MCPGATEWAY_BEARER_TOKEN', '')
-        server_count = int(os.environ.get('BENCHMARK_SERVER_COUNT', '10'))
-        start_port = int(os.environ.get('BENCHMARK_START_PORT', '9000'))
-
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json'
-        }
-
-        def api_request(method, path, data=None):
-            url = f'http://gateway:4444{path}'
-            body = json.dumps(data).encode() if data else None
-            req = urllib.request.Request(url, data=body, headers=headers, method=method)
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode())
-
-        # Register benchmark servers
-        print(f'Registering {server_count} benchmark servers (ports {start_port}-{start_port + server_count - 1})...')
-        registered = 0
-        for port in range(start_port, start_port + server_count):
-            name = f'benchmark-{port}'
-            try:
-                result = api_request('POST', '/gateways', {
-                    'name': name,
-                    'url': f'http://benchmark_server:{port}/mcp',
-                    'transport': 'STREAMABLEHTTP'
-                })
-                print(f'✅ Registered {name}: {result.get(\"id\", \"unknown\")}')
-                registered += 1
-            except urllib.error.HTTPError as e:
-                if e.code == 409:
-                    print(f'⏭️  {name} already registered')
-                    registered += 1
-                else:
-                    print(f'❌ Failed to register {name}: HTTP {e.code}')
-            except Exception as e:
-                print(f'❌ Failed to register {name}: {e}')
-
-        print(f'✅ Registration complete: {registered}/{server_count} benchmark servers')
-        "
-    profiles: ["benchmark"]
-
 ###############################################################################
 #  TLS PROFILE - Zero-config HTTPS via Nginx (enabled with --profile tls)
 #  Usage: make compose-tls  (or: docker compose --profile tls up -d)

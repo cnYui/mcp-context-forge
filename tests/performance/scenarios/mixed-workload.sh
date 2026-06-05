@@ -68,7 +68,7 @@ fi
 
 # Check if hey is installed
 if ! command -v hey &>/dev/null; then
-    error "hey is not installed. Install it with: brew install hey (macOS) or go install github.com/rakyll/hey@latest"
+    error "hey is not installed. Install it with: brew install hey (macOS) or install hey from https://github.com/rakyll/hey/releases"
     exit 1
 fi
 

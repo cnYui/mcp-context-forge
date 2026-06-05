@@ -336,7 +336,7 @@ export MCPGATEWAY_BEARER_TOKEN=$(python3 -m mcpgateway.utils.create_jwt_token --
 ```
 
 
-1. Add server fast-time that exposes git tools in the mcp gateway
+1. Add server git-server that exposes git tools in the mcp gateway
 
 Run the mcp server
 
@@ -352,11 +352,11 @@ Add it to the gateway
 ```bash
 curl -s -X POST -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"name":"fast-time","url":"http://localhost:9000/sse"}' \
+     -d '{"name":"git-server","url":"http://localhost:9000/sse"}' \
      http://localhost:4444/gateways
 ```
 
-2. This adds server to the gateway and exposes all the tools for git. You would see `fast-time-git-status` as the tool appearing in the tools tab of mcp gateway.
+2. This adds server to the gateway and exposes all the tools for git. You would see `git-server-git-status` as the tool appearing in the tools tab of mcp gateway.
 
 3. The next step is to run CedarPolicyPlugin as an external MCP server
 Go into `plugins/external/cedar` and run the following:
@@ -379,10 +379,10 @@ This will start CedarPolicyPlugin on port `8000`.
   ```
 
 2. To test cedar plugin from the UI
-Invoke the `fast-time-git-status` from the UI, with `admin` as role.
+Invoke the `git-server-git-status` from the UI, with `admin` as role.
 The request will be allowed by the CedarPolicyPlugin.
 
-If you switch to a another tool which is not in the policy `fast-time-git-show` expect denial by the CedarPolicyPlugin. For more details into policy, `plugins/external/cedar/resources/config.yaml`
+If you switch to a another tool which is not in the policy `git-server-git-show` expect denial by the CedarPolicyPlugin. For more details into policy, `plugins/external/cedar/resources/config.yaml`
 You get the following as output in the UI:
 ```json
   {

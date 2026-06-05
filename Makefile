@@ -787,7 +787,7 @@ clean:
 # help: query-log-analyze    - Analyze query log for N+1 patterns and slow queries
 # help: query-log-clear      - Clear database query log files
 
-.PHONY: smoketest test-mcp-cli test-mcp-rbac test-mcp-plugin-parity test-mcp-access-matrix test-mcp-session-isolation test-mcp-session-isolation-load test-e2e-sso test-live-gateway test test-verbose test-profile coverage test-docs pytest-examples test-curl htmlcov doctest doctest-verbose doctest-coverage doctest-check test-db-perf test-db-perf-verbose 2025-11-25 2025-11-25-core 2025-11-25-tasks 2025-11-25-auth 2025-11-25-report dev-query-log query-log-tail query-log-analyze query-log-clear load-test load-test-ui load-test-light load-test-heavy load-test-sustained load-test-stress load-test-report load-test-compose load-test-timeserver load-test-fasttime load-test-1000 load-test-summary load-test-baseline load-test-baseline-ui load-test-baseline-stress load-test-agentgateway-mcp-server-time
+.PHONY: smoketest test-mcp-cli test-mcp-rbac test-mcp-plugin-parity test-mcp-access-matrix test-mcp-session-isolation test-mcp-session-isolation-load test-e2e-sso test-live-gateway test test-verbose test-profile coverage test-docs pytest-examples test-curl htmlcov doctest doctest-verbose doctest-coverage doctest-check test-db-perf test-db-perf-verbose 2025-11-25 2025-11-25-core 2025-11-25-tasks 2025-11-25-auth 2025-11-25-report dev-query-log query-log-tail query-log-analyze query-log-clear load-test load-test-ui load-test-light load-test-heavy load-test-sustained load-test-stress load-test-report load-test-compose load-test-fasttest load-test-fasttest-heavy load-test-1000 load-test-summary load-test-baseline load-test-baseline-ui load-test-baseline-stress load-test-agentgateway-mcp-server-time
 
 # Dirs/files always excluded from standard pytest runs.
 # tests/live_gateway/ — see tests/live_gateway/README.md. Subsuites need
@@ -1514,7 +1514,7 @@ langfuse-up:                               ## Start Langfuse LLM observability s
 	@# Bring up the same lightweight MCP/A2A test targets used by the live smoke
 	@# suites so Langfuse runs can generate real end-to-end tool traffic without
 	@# depending on stale registrations from the testing profile.
-	$(LANGFUSE_COMPOSE) up -d fast_test_server register_fast_test a2a_echo_agent register_a2a_echo
+	$(LANGFUSE_COMPOSE) up -d fast_time_server register_fast_time a2a_echo_agent register_a2a_echo
 	$(VERIFY_LANGFUSE_GATEWAY_EXPORT)
 	@echo "⏳ Waiting for Langfuse to be ready..."
 	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
@@ -1630,8 +1630,8 @@ langfuse-monitoring-down:                  ## Stop Langfuse + monitoring stack
 	@echo "✅ Langfuse + monitoring stack stopped."
 
 # =============================================================================
-# help: 🧪 TESTING STACK (Locust + A2A echo + fast_test_server)
-# help: testing-up            - Start testing stack (Locust + A2A echo + fast_test_server)
+# help: 🧪 TESTING STACK (Locust + A2A echo + fast_time_server)
+# help: testing-up            - Start testing stack (Locust + A2A echo + fast_time_server)
 # help: testing-down          - Stop testing stack
 # help: testing-status        - Show status of testing services
 # help: testing-logs          - Show testing stack logs
@@ -1643,8 +1643,8 @@ HOST_UID ?= $(shell id -u 2>/dev/null || echo 1000)
 HOST_GID ?= $(shell id -g 2>/dev/null || echo 1000)
 
 .PHONY: testing-up
-testing-up:                                ## Start testing stack (Locust + A2A echo + fast_test_server)
-	@echo "🧪 Starting testing stack (fast_test_server)..."
+testing-up:                                ## Start testing stack (Locust + A2A echo + fast_time_server)
+	@echo "🧪 Starting testing stack (fast_time_server)..."
 	@echo "   🦗 Locust workers: $(TESTING_LOCUST_WORKERS) (override: TESTING_LOCUST_WORKERS=4 make testing-up)"
 	@# Fail early if port 8080 is already bound (nginx needs it)
 	@if lsof -Pi :8080 -sTCP:LISTEN >/dev/null 2>&1 || ss -tlnp 2>/dev/null | grep -q ':8080'; then \
@@ -1664,16 +1664,14 @@ testing-up:                                ## Start testing stack (Locust + A2A 
 	@echo "──────────────────────────────────────────────────────────────────────────"
 	@echo "Gateway (nginx)      http://localhost:8080         API proxy"
 	@echo "Locust Web UI        http://localhost:8089         Load testing (master+workers)"
-	@echo "Fast Test Server     http://localhost:8880         MCP benchmark target"
-	@echo "A2A Echo Agent       http://localhost:9100         A2A protocol target"
+	@echo "Fast Time Server     http://localhost:8880         MCP benchmark target"
 	@echo "MCP Inspector        http://localhost:6274         Interactive MCP client"
 	@echo "Keycloak             http://localhost:8180         SSO / OAuth 2.1 provider (realm: mcp-gateway)"
 	@echo ""
 	@echo "   🔒 For DAST security scanning, also start ZAP: make testing-zap-up"
 	@echo ""
 	@echo "   📝 Auto-registered:"
-	@echo "      • MCP gateway: fast_test (from fast_test_server)"
-	@echo "      • A2A agent:   a2a-echo-agent"
+	@echo "      • MCP gateway: fast_time (from fast_time_server)"
 	@echo ""
 	@echo "   Next:"
 	@echo "      • Open Locust: http://localhost:8089 (default host is http://nginx:80)"
@@ -1720,7 +1718,7 @@ testing-down:                              ## Stop testing stack
 .PHONY: testing-status
 testing-status:                            ## Show status of testing services
 	@echo "🧪 Testing stack status:"
-	@$(COMPOSE_CMD_MONITOR) ps | grep -E "(fast_test|a2a_echo_agent|locust|mcp_inspector)" || \
+	@$(COMPOSE_CMD_MONITOR) ps | grep -E "(fast_time|a2a_echo_agent|locust|mcp_inspector)" || \
 		echo "   No testing services running. Start with 'make testing-up'"
 	@WORKERS=$$($(COMPOSE_CMD_MONITOR) ps | grep -c "locust_worker" || true); \
 		echo "   🦗 Locust workers: $$WORKERS"
@@ -1888,176 +1886,25 @@ demo-a2a-apikey:                           ## Start only X-API-Key demo agent
 	$(VENV_DIR)/bin/python scripts/demo_a2a_agent_auth.py --auth-type apikey --port $(DEMO_A2A_APIKEY_PORT) --auto-register
 
 # =============================================================================
-# help: 🛡️  RESILIENCE TESTING STACK (slow-time-server)
-# help: resilience-up          - Start slow-time-server for timeout/circuit breaker testing
-# help: resilience-down        - Stop resilience testing stack
-# help: resilience-logs        - Show resilience stack logs
-# help: resilience-locust      - Run Locust load test against slow-time-server (10 users, 120s)
-# help: resilience-locust-ui   - Start Locust web UI for slow-time-server
-# help: test-secrets-detection-plugin - Validate the secrets detection plugin end to end
-# help: test-pii-filter-plugin        - Validate the PII filter plugin changes
-# help: resilience-jmeter      - Run JMeter baseline test against slow-time-server (20 threads, 5min)
-
-RESILIENCE_HOST ?= http://localhost:8889
-RESILIENCE_LOCUSTFILE := tests/loadtest/locustfile_slow_time_server.py
-RESILIENCE_JMETER_PLAN := tests/jmeter/slow_time_server_baseline.jmx
-
-.PHONY: resilience-up
-resilience-up:                             ## Start slow-time-server for resilience testing
-	@echo "Starting resilience testing stack (slow-time-server on port 8889)..."
-	$(COMPOSE_CMD_MONITOR) --profile resilience up -d
-	@echo ""
-	@echo "Resilience stack started!"
-	@echo ""
-	@echo "   Slow Time Server: $(RESILIENCE_HOST)"
-	@echo "     REST API:       $(RESILIENCE_HOST)/api/v1/time?delay=5"
-	@echo "     MCP SSE:        $(RESILIENCE_HOST)/sse"
-	@echo "     MCP HTTP:       $(RESILIENCE_HOST)/http"
-	@echo "     API Docs:       $(RESILIENCE_HOST)/api/v1/docs"
-	@echo "     Health:         $(RESILIENCE_HOST)/health"
-	@echo ""
-	@echo "   Run: make resilience-locust  or  make resilience-jmeter"
-
-.PHONY: resilience-down
-resilience-down:                           ## Stop resilience testing stack
-	@echo "Stopping resilience testing stack..."
-	$(COMPOSE_CMD_MONITOR) --profile resilience down --remove-orphans
-	@echo "Resilience stack stopped."
-
-.PHONY: resilience-logs
-resilience-logs:                           ## Show resilience stack logs
-	$(COMPOSE_CMD_MONITOR) --profile resilience logs -f --tail=100
-
-.PHONY: resilience-locust
-resilience-locust:                         ## Run Locust load test against slow-time-server (10 users, 120s)
-	@echo "Running resilience Locust load test..."
-	@echo "   Host: $(RESILIENCE_HOST)"
-	@echo "   Users: 10, Duration: 120s"
-	@echo "   Requires: make resilience-up"
-	@test -d "$(VENV_DIR)" || $(MAKE) venv
-	@mkdir -p reports
-	@/bin/bash -c "source $(VENV_DIR)/bin/activate && \
-		locust -f $(RESILIENCE_LOCUSTFILE) \
-			--host=$(RESILIENCE_HOST) \
-			--users=10 \
-			--spawn-rate=2 \
-			--run-time=120s \
-			--headless \
-			--html=reports/loadtest_resilience.html \
-			--csv=reports/loadtest_resilience \
-			--only-summary"
-	@echo "Report: reports/loadtest_resilience.html"
-
-.PHONY: resilience-locust-ui
-resilience-locust-ui:                      ## Start Locust web UI for slow-time-server
-	@echo "Starting Locust web UI for resilience testing..."
-	@echo "   Open http://localhost:8090 in your browser"
-	@echo "   Host: $(RESILIENCE_HOST)"
-	@echo "   Requires: make resilience-up"
-	@test -d "$(VENV_DIR)" || $(MAKE) venv
-	@/bin/bash -c "source $(VENV_DIR)/bin/activate && \
-		locust -f $(RESILIENCE_LOCUSTFILE) \
-			--host=$(RESILIENCE_HOST) \
-			--web-host=0.0.0.0 --web-port=8090"
-
-.PHONY: resilience-jmeter
-resilience-jmeter: jmeter-check            ## Run JMeter baseline test against slow-time-server (20 threads, 5min)
-	@echo "Running resilience JMeter baseline test..."
-	@echo "   Slow Time Server: $(RESILIENCE_HOST)"
-	@echo "   Threads: 20, Duration: 5 minutes"
-	@echo "   Requires: make resilience-up"
-	@mkdir -p $(JMETER_RESULTS_DIR)
-	@TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
-	$(JMETER_BIN) -n -t $(RESILIENCE_JMETER_PLAN) \
-		-JSLOW_TIME_URL=$(RESILIENCE_HOST) \
-		-JTHREADS=20 -JRAMP_UP=30 -JDURATION=300 \
-		-l $(JMETER_RESULTS_DIR)/resilience_$$TIMESTAMP.jtl \
-		-e -o $(JMETER_RESULTS_DIR)/resilience_$$TIMESTAMP \
-		$(JMETER_SUMMARISER) $(JMETER_OPTS)
-	@echo "Report: $(JMETER_RESULTS_DIR)/resilience_*/index.html"
-
-# =============================================================================
-# help: 🎯 BENCHMARK STACK (Go benchmark-server)
-# help: benchmark-up           - Start benchmark stack (MCP servers + auto-registration)
-# help: benchmark-down         - Stop benchmark stack
-# help: benchmark-clean        - Stop and remove all benchmark data (volumes)
-# help: benchmark-status       - Show status of benchmark services
-# help: benchmark-logs         - Show benchmark stack logs
-# help: bench-compare          - Run performance comparisons for Rust plugins
-# help:
-# help: Environment variables:
-# help:   BENCHMARK_SERVER_COUNT  - Number of MCP servers to spawn (default: 10)
-
-# Benchmark configuration (override via environment)
-BENCHMARK_SERVER_COUNT ?= 10
-BENCHMARK_START_PORT ?= 9000
-
-.PHONY: benchmark-up
-benchmark-up:                              ## Start benchmark stack (MCP servers + registration)
-	@echo "🎯 Starting benchmark stack ($(BENCHMARK_SERVER_COUNT) MCP servers on ports $(BENCHMARK_START_PORT)-$$(($(BENCHMARK_START_PORT) + $(BENCHMARK_SERVER_COUNT) - 1)))..."
-	BENCHMARK_SERVER_COUNT=$(BENCHMARK_SERVER_COUNT) BENCHMARK_START_PORT=$(BENCHMARK_START_PORT) \
-		$(COMPOSE_CMD_MONITOR) --profile benchmark up -d
-	@echo ""
-	@echo "✅ Benchmark stack started!"
-	@echo ""
-	@echo "   🚀 Benchmark Servers: http://localhost:$(BENCHMARK_START_PORT)-$$(($(BENCHMARK_START_PORT) + $(BENCHMARK_SERVER_COUNT) - 1))"
-	@echo "      • MCP endpoint:  http://localhost:<port>/mcp"
-	@echo "      • Health:        http://localhost:<port>/health"
-	@echo "      • Version:       http://localhost:<port>/version"
-	@echo ""
-	@echo "   📝 Registered as 'benchmark-$(BENCHMARK_START_PORT)' through 'benchmark-$$(($(BENCHMARK_START_PORT) + $(BENCHMARK_SERVER_COUNT) - 1))' gateways"
-	@echo ""
-	@echo "   Run load test: make load-test-ui"
-	@echo ""
-	@echo "   💡 Configure server count: BENCHMARK_SERVER_COUNT=50 make benchmark-up"
-
-.PHONY: benchmark-down
-benchmark-down:                            ## Stop benchmark stack
-	@echo "🎯 Stopping benchmark stack..."
-	$(COMPOSE_CMD_MONITOR) --profile benchmark down --remove-orphans
-	@echo "✅ Benchmark stack stopped."
-
-.PHONY: benchmark-clean
-benchmark-clean:                           ## Stop and remove all benchmark data (volumes)
-	@echo "🎯 Stopping and cleaning benchmark stack..."
-	$(COMPOSE_CMD_MONITOR) --profile benchmark down -v --remove-orphans
-	@echo "✅ Benchmark stack stopped and volumes removed."
-
-.PHONY: benchmark-status
-benchmark-status:                          ## Show status of benchmark services
-	@echo "🎯 Benchmark stack status:"
-	@$(COMPOSE_CMD_MONITOR) ps | grep -E "(benchmark)" || \
-		echo "   No benchmark services running. Start with 'make benchmark-up'"
-
-.PHONY: benchmark-logs
-benchmark-logs:                            ## Show benchmark stack logs
-	$(COMPOSE_CMD_MONITOR) --profile benchmark logs -f --tail=100
-
-
-# =============================================================================
-# 🖼️  EMBEDDED / EMBEDDED / IFRAME STACK - iframe mode with benchmark servers
+# 🖼️  EMBEDDED / EMBEDDED / IFRAME STACK
 # =============================================================================
 # help: 🖼️  EMBEDDED / EMBEDDED / IFRAME STACK
-# help: embedded-up              - Start embedded stack (iframe mode + benchmark servers)
+# help: embedded-up              - Start embedded stack (iframe mode)
 # help: embedded-down            - Stop embedded stack
 # help: embedded-clean           - Stop and remove all embedded data (volumes)
 # help: embedded-status          - Show status of embedded services
 # help: embedded-logs            - Show embedded stack logs
-# help:
-# help: Environment variables:
-# help:   BENCHMARK_SERVER_COUNT  - Number of MCP servers to spawn (default: 10)
 
-EMBEDDED_COMPOSE := $(COMPOSE_CMD) -f docker-compose.yml -f docker-compose-embedded.yml --profile benchmark
+EMBEDDED_COMPOSE := $(COMPOSE_CMD) -f docker-compose.yml -f docker-compose-embedded.yml
 
 .PHONY: embedded-up
-embedded-up:                               ## Start embedded stack (iframe mode + benchmark servers)
+embedded-up:                               ## Start embedded stack (iframe mode)
 	@if [ ! -f "docker-compose-embedded.yml" ]; then \
 		echo "❌ Compose override file not found: docker-compose-embedded.yml"; \
 		exit 1; \
 	fi
-	@echo "🖼️  Starting embedded stack (iframe mode + $(BENCHMARK_SERVER_COUNT) benchmark servers)..."
-	BENCHMARK_SERVER_COUNT=$(BENCHMARK_SERVER_COUNT) BENCHMARK_START_PORT=$(BENCHMARK_START_PORT) \
-		$(EMBEDDED_COMPOSE) up -d
+	@echo "🖼️  Starting embedded stack (iframe mode)..."
+	$(EMBEDDED_COMPOSE) up -d
 	@echo ""
 	@echo "✅ Embedded stack started!"
 	@echo ""
@@ -2066,16 +1913,11 @@ embedded-up:                               ## Start embedded stack (iframe mode 
 	@echo "iframe Harness       http://localhost:8889         UI inside iframe"
 	@echo "Gateway (nginx)      http://localhost:8080         API proxy"
 	@echo "Gateway Admin UI     http://localhost:8080/admin/  Direct admin access"
-	@echo "Benchmark Servers    http://localhost:9000-9099    MCP benchmark targets"
-	@echo ""
-	@echo "   📝 $(BENCHMARK_SERVER_COUNT) benchmark servers auto-registered (50 tools each = $$(($(BENCHMARK_SERVER_COUNT) * 50)) tools)"
 	@echo ""
 	@echo "   🔧 Embedded settings:"
 	@echo "      • UI mode:       embedded (iframe-safe)"
 	@echo "      • Default role:  developer"
 	@echo "      • Public visibility: disabled"
-	@echo ""
-	@echo "   💡 Configure: BENCHMARK_SERVER_COUNT=50 make embedded-up"
 
 .PHONY: embedded-down
 embedded-down:                             ## Stop embedded stack
@@ -2193,8 +2035,8 @@ performance-clean:                         ## Stop and remove all performance da
 # help: load-test-report      - Show last load test HTML report
 # help: load-test-compose     - Light load test for compose stack (port 4444)
 # help: load-test-compose-docker - Light load test using containerized Locust (no local Locust required)
-# help: load-test-timeserver  - Load test fast_time_server (5 users, 30s)
-# help: load-test-fasttime    - Load test fast_time MCP tools (50 users, 60s)
+# help: load-test-fasttest     - Load test fast_time MCP tools (5 users, 30s)
+# help: load-test-fasttest-heavy - Load test fast_time MCP tools (50 users, 60s)
 # help: load-test-1000        - High-load test (1000 users, 120s)
 # help: load-test-summary     - Parse CSV reports and show summary statistics
 
@@ -2291,7 +2133,7 @@ load-test-ui:                              ## Start Locust web UI at http://loca
 		echo ""; \
 	fi
 	@echo "   💡 For best results, run: sudo scripts/tune-loadtest.sh"
-	@echo "   💡 Use 'User classes' dropdown to select FastTimeUser, etc."
+	@echo "   💡 Use 'User classes' dropdown to select FastTestUser, etc."
 	@echo "   💡 Start benchmark servers first: make benchmark-up"
 	@echo ""
 	@test -d "$(VENV_DIR)" || $(MAKE) venv
@@ -2470,11 +2312,11 @@ load-test-compose-docker:                  ## Light load test using containerize
 		$(COMPOSE_CMD_MONITOR) --profile testing run --rm locust
 	@echo "✅ Reports: reports/locust_report.html and reports/locust_*.csv"
 
-load-test-timeserver:                      ## Load test fast_time_server tools (5 users, 30s)
+load-test-fasttest:                      ## Load test fast_time_server tools (5 users, 30s)
 	@echo "⏰ Running time server load test..."
 	@echo "   Host: http://localhost:4444"
 	@echo "   Users: 5, Duration: 30s"
-	@echo "   💡 Requires: docker compose --profile with-fast-time up -d"
+	@echo "   💡 Requires: docker compose --profile testing up -d"
 	@test -d "$(VENV_DIR)" || $(MAKE) venv
 	@mkdir -p reports
 	@/bin/bash -c "source $(VENV_DIR)/bin/activate && \
@@ -2486,15 +2328,15 @@ load-test-timeserver:                      ## Load test fast_time_server tools (
 			--headless \
 			--html=reports/loadtest_timeserver.html \
 			--csv=reports/loadtest_timeserver \
-			FastTimeUser \
+			FastTestUser \
 			--only-summary"
 	@echo "✅ Report: reports/loadtest_timeserver.html"
 
-load-test-fasttime:                        ## Load test fast_time MCP tools (50 users, 60s)
-	@echo "⏰ Running FastTime MCP server load test..."
+load-test-fasttest-heavy:                        ## Load test fast_time MCP tools (50 users, 60s)
+	@echo "⏰ Running FastTest MCP server load test..."
 	@echo "   Host: http://localhost:4444"
 	@echo "   Users: 50, Duration: 60s"
-	@echo "   💡 Requires: docker compose --profile with-fast-time up -d"
+	@echo "   💡 Requires: docker compose --profile testing up -d"
 	@test -d "$(VENV_DIR)" || $(MAKE) venv
 	@mkdir -p reports
 	@/bin/bash -c "source $(VENV_DIR)/bin/activate && \
@@ -2506,7 +2348,7 @@ load-test-fasttime:                        ## Load test fast_time MCP tools (50 
 			--headless \
 			--html=reports/loadtest_fasttime.html \
 			--csv=reports/loadtest_fasttime \
-			FastTimeUser \
+			FastTestUser \
 			--only-summary"
 	@echo "✅ Report: reports/loadtest_fasttime.html"
 
@@ -2616,13 +2458,13 @@ with open('$(LOADTEST_CSV_PREFIX)_stats.csv') as f: \
 # help: load-test-baseline-ui  - Baseline test with Locust Web UI
 # help: load-test-baseline-stress - Baseline stress test (2000 users, 3min)
 
-BASELINE_HOST ?= http://localhost:8888
+BASELINE_HOST ?= http://localhost:8880
 
 load-test-baseline:                        ## Baseline test: Fast Time Server REST API (1000 users, 3min)
 	@echo "📊 Running BASELINE load test (Fast Time Server REST API)..."
 	@echo "   Host: $(BASELINE_HOST)"
 	@echo "   Users: 1000, Duration: 3 minutes"
-	@echo "   💡 Requires: docker compose --profile with-fast-time up -d"
+	@echo "   💡 Requires: docker compose --profile testing up -d"
 	@echo "   📝 This tests the MCP server directly WITHOUT the gateway"
 	@test -d "$(VENV_DIR)" || $(MAKE) venv
 	@/bin/bash -c 'source $(VENV_DIR)/bin/activate && \
@@ -2644,7 +2486,7 @@ load-test-baseline-ui:                     ## Baseline test with Locust Web UI (
 	@echo "   🎯 Host: $(BASELINE_HOST)"
 	@echo "   👥 Defaults: 1000 users, 100 spawn/s, 3 min"
 	@echo "   🎛️  Class picker enabled - select which tests to run"
-	@echo "   💡 Requires: docker compose --profile with-fast-time up -d"
+	@echo "   💡 Requires: docker compose --profile testing up -d"
 	@test -d "$(VENV_DIR)" || $(MAKE) venv
 	@/bin/bash -c 'source $(VENV_DIR)/bin/activate && \
 		cd tests/loadtest && \
@@ -3081,7 +2923,7 @@ ocp-uninstall:                               ## Uninstall the ContextForge Helm 
 # help: jmeter-ui                     - Launch JMeter GUI for interactive test editing
 # help: jmeter-rest-baseline          - Run REST API baseline test (1,000 RPS, 10min)
 # help: jmeter-mcp-baseline           - Run MCP JSON-RPC baseline test (1,000 RPS, 15min)
-# help: jmeter-mcp-servers-baseline   - Run MCP test servers baseline (fast_time, fast_test)
+# help: jmeter-mcp-servers-baseline   - Run MCP test servers baseline (fast_time, fast_time)
 # help: jmeter-load                   - Run load test (4,000 RPS, 30min)
 # help: jmeter-stress                 - Run stress test (ramp to 10,000 RPS)
 # help: jmeter-spike                  - Run spike test (1K→10K→1K recovery)
@@ -3105,8 +2947,8 @@ export JMETER_OPTS ?= -Djava.util.prefs.userRoot=/tmp/jmeter-prefs -Djava.util.p
 JMETER_JWT_SECRET ?= $(or $(JWT_SECRET_KEY),my-test-key-but-now-longer-than-32-bytes)
 JMETER_TOKEN ?= $(shell python3 -m mcpgateway.utils.create_jwt_token --data '{"sub":"admin@example.com","is_admin":true,"teams":null}' --exp 10080 --secret $(JMETER_JWT_SECRET) 2>/dev/null || echo "")
 JMETER_SERVER_ID ?=
-JMETER_FAST_TIME_URL ?= http://localhost:8888
-JMETER_FAST_TEST_URL ?= http://localhost:8880
+JMETER_FAST_TIME_REFERENCE_URL ?= http://localhost:8888
+JMETER_FAST_TIME_URL ?= http://localhost:8880
 JMETER_SUMMARISER ?= -Jsummariser.interval=10
 
 .PHONY: jmeter-install jmeter-ui jmeter-check jmeter-quick jmeter-clean
@@ -3212,17 +3054,17 @@ jmeter-mcp-baseline: jmeter-check          ## Run MCP JSON-RPC baseline test (1,
 		-e -o $(JMETER_RESULTS_DIR)/mcp_baseline_$$TIMESTAMP/
 	@echo "📄 Report: $(JMETER_RESULTS_DIR)/mcp_baseline_*/index.html"
 
-jmeter-mcp-servers-baseline: jmeter-check  ## Run MCP test servers baseline (fast_time, fast_test)
+jmeter-mcp-servers-baseline: jmeter-check  ## Run MCP test servers baseline (fast_time, fast_time)
 	@echo "📊 Running MCP test servers baseline..."
+	@echo "   Fast Time Server: $(JMETER_FAST_TIME_REFERENCE_URL)"
 	@echo "   Fast Time Server: $(JMETER_FAST_TIME_URL)"
-	@echo "   Fast Test Server: $(JMETER_FAST_TEST_URL)"
 	@echo "   Target: 2,000 RPS per server for 10 minutes"
 	@mkdir -p $(JMETER_RESULTS_DIR)
 	@TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
 	$(JMETER_BIN) -n $(JMETER_SUMMARISER) -t $(JMETER_DIR)/mcp_test_servers_baseline.jmx \
 		-JJMETER_FRAGMENT_DIR=$(JMETER_FRAGMENT_DIR) \
+		-JFAST_TIME_REFERENCE_URL=$(JMETER_FAST_TIME_REFERENCE_URL) \
 		-JFAST_TIME_URL=$(JMETER_FAST_TIME_URL) \
-		-JFAST_TEST_URL=$(JMETER_FAST_TEST_URL) \
 		-JTHREADS=200 -JDURATION=600 \
 		-l $(JMETER_RESULTS_DIR)/mcp_servers_$$TIMESTAMP.jtl \
 		-e -o $(JMETER_RESULTS_DIR)/mcp_servers_$$TIMESTAMP/
@@ -3467,7 +3309,7 @@ mutmut-clean:
 # =============================================================================
 # help: 📊 METRICS
 # help: pip-licenses         - Produce dependency license inventory (markdown)
-# help: license-check         - Check repo licenses with policy file (`pyproject`, pip, Go, Rust).
+# help: license-check         - Check repo licenses with policy file (`pyproject`, pip, Rust).
 # help:                      - Set LICENSE_CHECK_INCLUDE_DEV_GROUPS=true to include dev groups.
 # help:                      - Set LICENSE_CHECK_SUMMARY_ONLY=true for compact output.
 # help: scc                  - Quick LoC/complexity snapshot with scc
@@ -3648,8 +3490,6 @@ images:
 # help: linting-helm-lint            - Run Helm chart lint
 # help: linting-helm-chart-testing   - Run chart-testing lint (ct) for Helm chart
 # help: linting-helm-unittest        - Run Helm chart unit tests via helm-unittest plugin
-# help: linting-go-gosec             - Run gosec on discovered Go modules
-# help: linting-go-govulncheck       - Run govulncheck on discovered Go modules
 # help: linting-security-checkov     - Run Checkov IaC security scan
 # help: linting-security-kube-linter - Run kube-linter against Kubernetes/Helm manifests
 # help: linting-coverage-diff-cover  - Run diff-cover against changed lines
@@ -3689,7 +3529,6 @@ FILE_AWARE_LINTERS := isort black pylint mypy bandit pydocstyle \
 	linting-python-fixit linting-python-xenon linting-python-refurb \
 	linting-docs-codespell linting-docs-markdown-links linting-web-depcheck \
 	linting-helm-lint linting-helm-chart-testing linting-helm-unittest \
-	linting-go-gosec linting-go-govulncheck \
 	linting-security-checkov linting-security-kube-linter \
 	linting-coverage-diff-cover linting-full
 
@@ -3828,11 +3667,9 @@ lint-smart:
 
 # Temporary roots for ad-hoc linting tools
 LINT_TMP_ROOT ?= /tmp/mcp-context-forge-lint
-LINT_GO_ROOT ?= $(LINT_TMP_ROOT)/go
 LINT_HELM_ROOT ?= $(LINT_TMP_ROOT)/helm
 LINT_NODE_ROOT ?= $(LINT_TMP_ROOT)/node
 LINT_PY_VENV ?= $(LINT_TMP_ROOT)/py-venv
-LINT_GO_TOOLCHAIN ?= go1.26.4
 
 # Tool target defaults
 LINT_ZIZMOR_TARGET ?= .github/workflows
@@ -3845,10 +3682,9 @@ LINT_MARKDOWN_LINKS_TARGET ?= README.md
 LINT_DEPCHECK_TARGET ?= .
 LINT_CHECKOV_TARGET ?= .
 LINT_KUBE_LINTER_TARGET ?= charts/mcp-stack
-LINT_GO_MODULE_SEARCH_DIRS ?= mcp-servers a2a-agents
 
 # Passing gates only (used by CI workflow linting-full)
-LINTING_FULL_TARGETS := linting-workflow-actionlint linting-workflow-reviewdog linting-workflow-commitlint linting-helm-lint linting-helm-chart-testing linting-helm-unittest linting-go-gosec linting-go-govulncheck
+LINTING_FULL_TARGETS := linting-workflow-actionlint linting-workflow-reviewdog linting-workflow-commitlint linting-helm-lint linting-helm-chart-testing linting-helm-unittest
 
 # Tools requiring auth/login (e.g. safety, OSSF scorecard) are intentionally excluded.
 
@@ -3862,13 +3698,8 @@ linting-python-env:
 .PHONY: linting-workflow-actionlint
 linting-workflow-actionlint:         ## 🧭  GitHub Actions workflow linting
 	@echo "🧭 actionlint ($(LINT_ZIZMOR_TARGET); shellcheck integration disabled)..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@/bin/bash -c "set -euo pipefail; \
-		export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache'; \
-		go run github.com/rhysd/actionlint/cmd/actionlint@latest -shellcheck="
+	@command -v actionlint >/dev/null 2>&1 || { echo "❌ actionlint not found"; exit 1; }
+	@actionlint -shellcheck= "$(LINT_ZIZMOR_TARGET)"
 
 .PHONY: linting-workflow-zizmor
 linting-workflow-zizmor:             ## 🔐  GitHub Actions security linting
@@ -3880,16 +3711,9 @@ linting-workflow-zizmor:             ## 🔐  GitHub Actions security linting
 .PHONY: linting-workflow-reviewdog
 linting-workflow-reviewdog:          ## 🐶  reviewdog in local reporter mode
 	@echo "🐶 reviewdog local run (input: actionlint)..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@/bin/bash -c "set -euo pipefail; \
-		export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		export GOBIN='$(LINT_GO_ROOT)/bin'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache' '$(LINT_GO_ROOT)/bin'; \
-		go install github.com/reviewdog/reviewdog/cmd/reviewdog@latest >/dev/null; \
-		go run github.com/rhysd/actionlint/cmd/actionlint@latest -shellcheck= -oneline | \
-			'$(LINT_GO_ROOT)/bin/reviewdog' -name=actionlint -efm='%f:%l:%c: %m' -reporter=local"
+	@command -v actionlint >/dev/null 2>&1 || { echo "❌ actionlint not found"; exit 1; }
+	@command -v reviewdog >/dev/null 2>&1 || { echo "❌ reviewdog not found"; exit 1; }
+	@actionlint -shellcheck= -oneline "$(LINT_ZIZMOR_TARGET)" | reviewdog -name=actionlint -efm='%f:%l:%c: %m' -reporter=local
 
 .PHONY: linting-python-fixit
 linting-python-fixit:                ## 🧪  Fixit Python linting
@@ -3950,18 +3774,13 @@ linting-helm-lint:                   ## ⎈  Helm lint wrapper
 .PHONY: linting-helm-chart-testing
 linting-helm-chart-testing:          ## ⎈  chart-testing lint (relaxed local defaults)
 	@echo "⎈ chart-testing lint..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@/bin/bash -c "set -euo pipefail; \
-		export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache'; \
-		go run github.com/helm/chart-testing/v3/ct@latest lint \
-			--charts $(CHART_DIR) \
-			--validate-chart-schema=false \
-			--validate-yaml=false \
-			--validate-maintainers=false \
-			--check-version-increment=false"
+	@command -v ct >/dev/null 2>&1 || { echo "❌ chart-testing binary 'ct' not found"; exit 1; }
+	@ct lint \
+		--charts $(CHART_DIR) \
+		--validate-chart-schema=false \
+		--validate-yaml=false \
+		--validate-maintainers=false \
+		--check-version-increment=false
 
 .PHONY: linting-helm-unittest
 linting-helm-unittest:               ## 🧪  Helm template unit tests
@@ -3978,44 +3797,6 @@ linting-helm-unittest:               ## 🧪  Helm template unit tests
 		fi; \
 		helm unittest $(CHART_DIR)"
 
-.PHONY: linting-go-gosec
-linting-go-gosec:                    ## 🔒  Go security static analysis
-	@echo "🔒 gosec scan of discovered Go modules..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		export GOBIN='$(LINT_GO_ROOT)/bin'; \
-		export GOTOOLCHAIN='$(LINT_GO_TOOLCHAIN)'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache' '$(LINT_GO_ROOT)/bin'; \
-		go install github.com/securego/gosec/v2/cmd/gosec@latest >/dev/null; \
-		mods="$$( { find $(LINT_GO_MODULE_SEARCH_DIRS) -name go.mod -not -path '*/templates/*' -exec dirname {} ';' 2>/dev/null || true; } | sort -u )"; \
-		if [ -z "$$mods" ]; then echo 'ℹ️  No Go modules found'; exit 0; fi; \
-		while IFS= read -r d; do \
-			[ -n "$$d" ] || continue; \
-			echo "→ gosec $$d"; \
-			(cd "$$d" && "$(LINT_GO_ROOT)/bin/gosec" ./...); \
-		done <<< "$$mods"
-
-.PHONY: linting-go-govulncheck
-linting-go-govulncheck:              ## 🔎  Go vulnerability checks
-	@echo "🔎 govulncheck scan of discovered Go modules..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		export GOBIN='$(LINT_GO_ROOT)/bin'; \
-		export GOTOOLCHAIN='$(LINT_GO_TOOLCHAIN)'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache' '$(LINT_GO_ROOT)/bin'; \
-		go install golang.org/x/vuln/cmd/govulncheck@latest >/dev/null; \
-		mods="$$( { find $(LINT_GO_MODULE_SEARCH_DIRS) -name go.mod -not -path '*/templates/*' -exec dirname {} ';' 2>/dev/null || true; } | sort -u )"; \
-		if [ -z "$$mods" ]; then echo 'ℹ️  No Go modules found'; exit 0; fi; \
-		while IFS= read -r d; do \
-			[ -n "$$d" ] || continue; \
-			echo "→ govulncheck $$d"; \
-			(cd "$$d" && "$(LINT_GO_ROOT)/bin/govulncheck" ./...); \
-		done <<< "$$mods"
-
 .PHONY: linting-security-checkov
 linting-security-checkov:            ## 🛡️  IaC security scanning with Checkov
 	@echo "🛡️ checkov scan of $(LINT_CHECKOV_TARGET)..."
@@ -4026,16 +3807,8 @@ linting-security-checkov:            ## 🛡️  IaC security scanning with Chec
 .PHONY: linting-security-kube-linter
 linting-security-kube-linter:        ## 🧱  Kubernetes best-practice linting
 	@echo "🧱 kube-linter scan of $(LINT_KUBE_LINTER_TARGET)..."
-	@command -v go >/dev/null 2>&1 || { echo "❌ go not found"; exit 1; }
-	@/bin/bash -c "set -euo pipefail; \
-		export GOPATH='$(LINT_GO_ROOT)/gopath'; \
-		export GOMODCACHE='$(LINT_GO_ROOT)/gopath/pkg/mod'; \
-		export GOCACHE='$(LINT_GO_ROOT)/gocache'; \
-		export GOBIN='$(LINT_GO_ROOT)/bin'; \
-		export GOTOOLCHAIN='$(LINT_GO_TOOLCHAIN)'; \
-		mkdir -p '$(LINT_GO_ROOT)/gopath' '$(LINT_GO_ROOT)/gopath/pkg/mod' '$(LINT_GO_ROOT)/gocache' '$(LINT_GO_ROOT)/bin'; \
-		go install golang.stackrox.io/kube-linter/cmd/kube-linter@latest >/dev/null; \
-		'$(LINT_GO_ROOT)/bin/kube-linter' lint '$(LINT_KUBE_LINTER_TARGET)'"
+	@command -v kube-linter >/dev/null 2>&1 || { echo "❌ kube-linter not found"; exit 1; }
+	@kube-linter lint '$(LINT_KUBE_LINTER_TARGET)'
 
 .PHONY: linting-coverage-diff-cover
 linting-coverage-diff-cover:         ## 📊  Changed-lines coverage gate
@@ -4156,9 +3929,6 @@ pre-commit: uv                     ## 🪄  Run pre-commit tool
 			'$(CURDIR)/.cache/xdg-cache' \
 			'$(CURDIR)/.cache/xdg-data' \
 			'$(CURDIR)/.cache/virtualenv-app-data' \
-			'$(CURDIR)/.cache/go-cache' \
-			'$(CURDIR)/.cache/go-mod' \
-			'$(CURDIR)/.cache/go-build' \
 			'$(CURDIR)/.cache/pip-cache' \
 			'$(CURDIR)/.cache/tmp'; \
 		PRE_COMMIT_HOME='$(CURDIR)/.cache/pre-commit-home' \
@@ -4170,9 +3940,6 @@ pre-commit: uv                     ## 🪄  Run pre-commit tool
 		PIP_CACHE_DIR='$(CURDIR)/.cache/pip-cache' \
 		PIP_USE_PEP517='0' \
 		PIP_NO_BUILD_ISOLATION='1' \
-		GOPATH='$(CURDIR)/.cache/go-cache' \
-		GOMODCACHE='$(CURDIR)/.cache/go-mod' \
-		GOCACHE='$(CURDIR)/.cache/go-build' \
 		$(VENV_DIR)/bin/pre-commit run --config .pre-commit-lite.yaml --all-files --show-diff-on-failure"
 
 RUFF_MODE   ?= check
@@ -4836,23 +4603,17 @@ test-js-ui:
 ################################################################################
 # 🛡️  OSV-SCANNER  ▸  vulnerabilities scanner
 ################################################################################
-# help: osv-install          - Install/upgrade osv-scanner (Go)
 # help: osv-scan-source      - Scan source & lockfiles for CVEs
 # help: osv-scan-image       - Scan the built container image for CVEs
 # help: osv-scan             - Run all osv-scanner checks (source, image, licence)
 
-.PHONY: osv-install osv-scan-source osv-scan-image osv-scan
-
-osv-install:                  ## Install/upgrade osv-scanner
-	go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
+.PHONY: osv-scan-source osv-scan-image osv-scan
 
 # ─────────────── Source directory scan ────────────────────────────────────────
 osv-scan-source:
 	@command -v osv-scanner >/dev/null 2>&1 || { \
 		echo "❌ osv-scanner not installed."; \
-		echo "💡 Install with:"; \
-		echo "   • go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest"; \
-		echo "   • Or run: make osv-install"; \
+		echo "💡 Install the osv-scanner binary from https://google.github.io/osv-scanner/installation/"; \
 		exit 1; \
 	}
 	@echo "🔍  osv-scanner source scan..."
@@ -4862,9 +4623,7 @@ osv-scan-source:
 osv-scan-image:
 	@command -v osv-scanner >/dev/null 2>&1 || { \
 		echo "❌ osv-scanner not installed."; \
-		echo "💡 Install with:"; \
-		echo "   • go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest"; \
-		echo "   • Or run: make osv-install"; \
+		echo "💡 Install the osv-scanner binary from https://google.github.io/osv-scanner/installation/"; \
 		exit 1; \
 	}
 	@echo "🔍  osv-scanner image scan..."
@@ -5928,7 +5687,7 @@ endif
 
 # Profile detection (for platform-specific services)
 ifeq ($(PLATFORM),linux/amd64)
-    PROFILE = --profile with-fast-time
+    PROFILE = --profile testing
 endif
 
 define COMPOSE
@@ -7262,7 +7021,7 @@ SHELL_SCRIPTS := $(shell find . -type f -name '*.sh' \
 	-not -path './.tox/*')
 
 # Define shfmt binary location
-SHFMT := $(shell command -v shfmt 2>/dev/null || echo "$(HOME)/go/bin/shfmt")
+SHFMT := $(shell command -v shfmt 2>/dev/null || echo "")
 
 .PHONY: shell-linters-install shell-lint shfmt-fix shellcheck bashate
 
@@ -7280,22 +7039,17 @@ shell-linters-install:     ## 🔧  Install shellcheck, shfmt, bashate
 	    *) echo "⚠️  Please install ShellCheck manually" ;; \
 	  esac ; \
 	fi ; \
-	# -------- shfmt (Go) -------- \
-	if ! command -v shfmt >/dev/null 2>&1 && [ ! -f "$(HOME)/go/bin/shfmt" ] ; then \
+	# -------- shfmt ------------- \
+	if ! command -v shfmt >/dev/null 2>&1 ; then \
 	  echo "🛠  Installing shfmt..." ; \
-	  if command -v go >/dev/null 2>&1; then \
-	    GO111MODULE=on go install mvdan.cc/sh/v3/cmd/shfmt@latest; \
-	    echo "✅  shfmt installed to $(HOME)/go/bin/shfmt"; \
-	  else \
-	    case "$$(uname -s)" in \
-	      Darwin)  brew install shfmt ;; \
-	      Linux)   { command -v apt-get && sudo apt-get update -qq && sudo apt-get install -y shfmt ; } || \
-	               { echo "⚠️  Go not found - install Go or shfmt package manually"; } ;; \
-	      *) echo "⚠️  Please install shfmt manually" ;; \
-	    esac ; \
-	  fi ; \
+	  case "$$(uname -s)" in \
+	    Darwin)  brew install shfmt ;; \
+	    Linux)   { command -v apt-get && sudo apt-get update -qq && sudo apt-get install -y shfmt ; } || \
+	             { echo "⚠️  Please install shfmt manually"; } ;; \
+	    *) echo "⚠️  Please install shfmt manually" ;; \
+	  esac ; \
 	else \
-	  echo "✅  shfmt already installed at: $$(command -v shfmt || echo $(HOME)/go/bin/shfmt)"; \
+	  echo "✅  shfmt already installed at: $$(command -v shfmt)"; \
 	fi ; \
 	# -------- bashate (pip) ----- \
 	if ! $(VENV_DIR)/bin/bashate -h >/dev/null 2>&1 ; then \
@@ -7315,7 +7069,7 @@ shell-lint: shell-linters-install  ## 🔍  Run shfmt, ShellCheck & bashate
 		$(SHFMT) -d -i 4 -ci $(SHELL_SCRIPTS) || true; \
 	else \
 		echo "⚠️  shfmt not installed - skipping"; \
-		echo "💡  Install with: go install mvdan.cc/sh/v3/cmd/shfmt@latest"; \
+		echo "💡  Install with: brew install shfmt (macOS) or apt-get install shfmt (Linux)"; \
 	fi
 	@echo "🔍  Running ShellCheck..."
 	@command -v shellcheck >/dev/null 2>&1 || { \
@@ -7334,9 +7088,8 @@ shfmt-fix: shell-linters-install   ## 🎨  Auto-format *.sh in place
 	elif [ -f "$(SHFMT)" ]; then \
 		$(SHFMT) -w -i 4 -ci $(SHELL_SCRIPTS); \
 	else \
-		echo "❌  shfmt not found in PATH or $(HOME)/go/bin/"; \
-		echo "💡  Install with: go install mvdan.cc/sh/v3/cmd/shfmt@latest"; \
-		echo "    Or: brew install shfmt (macOS)"; \
+		echo "❌  shfmt not found in PATH"; \
+		echo "💡  Install with: brew install shfmt (macOS) or apt-get install shfmt (Linux)"; \
 		exit 1; \
 	fi
 	@echo "✅  shfmt formatting done."

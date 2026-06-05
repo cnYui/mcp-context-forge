@@ -202,7 +202,7 @@ curl -s -H "Authorization: Bearer $MCPGATEWAY_BEARER_TOKEN" \
     ```bash
     # 1️⃣  Spin up the sample GO MCP time server using mcpgateway.translate & docker
     python3 -m mcpgateway.translate \
-         --stdio "docker run --rm -i ghcr.io/ibm/fast-time-server:latest -transport=stdio" \
+         --stdio "docker run --rm -i mcpgateway/fast-time-server:latest" \
          --expose-sse \
          --port 8003
 

@@ -140,7 +140,7 @@ The framework supports two distinct plugin deployment patterns:
 
 #### **External Plugins** (Remote MCP Servers)
 - Standalone MCP servers implementing plugin logic
-- Can be written in any language (Python, TypeScript, Go, Rust, etc.)
+- Can be written in any language (Python, TypeScript, Rust, etc.)
 - Communicate via MCP protocol (Streamable HTTP over TCP or UDS, STDIO, SSE)
 - Examples: OPA filter, Cedar Policy Plugin (RBAC), LlamaGuard, OpenAI Moderation, custom AI services
 
@@ -1270,7 +1270,7 @@ plugin_templates/native/
 
 ##### External Plugins
 - **Architecture**: Standalone MCP servers communicating via protocol
-- **Language**: Any language (Python, TypeScript, Go, Rust, etc.)
+- **Language**: Any language (Python, TypeScript, Rust, etc.)
 - **Performance**: 10-100ms latency depending on network and service
 - **Use Cases**: AI service integration, complex processing, external tool orchestration
 
@@ -1313,7 +1313,7 @@ plugins:
       #   ca_bundle: /app/certs/plugins/ca.crt
       #   client_cert: /app/certs/plugins/gateway-client.pem
 
-  # Go plugin
+  # External plugin
   - name: "HighPerformanceFilter"
     kind: "external"
     mcp:
@@ -1916,7 +1916,7 @@ plugins:
       proto: "STREAMABLEHTTP"
       url: "http://nodejs-plugin:3000/mcp"
 
-  # Go plugin
+  # External plugin
   - name: "HighPerformanceFilter"
     kind: "external"
     mcp:
