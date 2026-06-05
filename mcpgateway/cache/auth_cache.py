@@ -866,18 +866,20 @@ class AuthCache:
         Returns:
             Dict with scalar fields only (no lazy-loaded relationships)
         """
+        created_at = getattr(team, "created_at", None)
+        updated_at = getattr(team, "updated_at", None)
         return {
             "id": team.id,
             "name": team.name,
-            "slug": team.slug,
-            "description": team.description,
-            "created_by": team.created_by,
-            "is_personal": team.is_personal,
-            "visibility": team.visibility,
-            "max_members": team.max_members,
-            "is_active": team.is_active,
-            "created_at": team.created_at.isoformat() if team.created_at else None,
-            "updated_at": team.updated_at.isoformat() if team.updated_at else None,
+            "slug": getattr(team, "slug", None),
+            "description": getattr(team, "description", None),
+            "created_by": getattr(team, "created_by", None),
+            "is_personal": getattr(team, "is_personal", False),
+            "visibility": getattr(team, "visibility", "public"),
+            "max_members": getattr(team, "max_members", None),
+            "is_active": getattr(team, "is_active", True),
+            "created_at": created_at.isoformat() if created_at else None,
+            "updated_at": updated_at.isoformat() if updated_at else None,
         }
 
     async def get_user_team_objects(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
@@ -1273,6 +1275,33 @@ class AuthCache:
                 logger.warning(f"AuthCache Redis is_token_revoked failed: {e}")
 
         return None
+
+    async def set_not_revoked(self, jti: str) -> None:
+        """Cache a confirmed DB result that a token is not revoked (negative result caching).
+
+        Call this immediately after a DB query returns None for the given JTI so
+        subsequent callers skip the DB round-trip within the revocation TTL window.
+        ``invalidate_revocation()`` evicts this entry atomically on revocation, so
+        there is no window where a freshly-revoked token receives a stale False.
+
+        Args:
+            jti: JWT ID confirmed by DB as not revoked
+
+        Examples:
+            >>> import asyncio
+            >>> cache = AuthCache()
+            >>> asyncio.run(cache.set_not_revoked("some-jti"))
+            >>> asyncio.run(cache.is_token_revoked("some-jti"))
+            False
+        """
+        if not self._enabled:
+            return
+        with self._lock:
+            if jti not in self._revoked_jtis:
+                self._revocation_cache[jti] = CacheEntry(
+                    value=False,
+                    expiry=time.time() + self._revocation_ttl,
+                )
 
     async def sync_revoked_tokens(self) -> None:
         """Sync revoked tokens from database to cache on startup.

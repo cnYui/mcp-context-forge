@@ -1291,3 +1291,98 @@ class TestRedisMissCounts:
 
         assert result is None
         assert auth_cache._redis_miss_count == initial + 1
+
+
+class TestSetNotRevoked:
+    """Tests for set_not_revoked() negative result caching (Issue #2692)."""
+
+    @pytest.mark.asyncio
+    async def test_set_not_revoked_stores_false(self, auth_cache):
+        """set_not_revoked stores False in L1 so is_token_revoked skips DB."""
+        jti = "not-revoked-jti"
+
+        await auth_cache.set_not_revoked(jti)
+
+        result = await auth_cache.is_token_revoked(jti)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_set_not_revoked_no_op_when_disabled(self):
+        """Disabled cache: set_not_revoked is a no-op and is_token_revoked returns None."""
+        cache = AuthCache(enabled=False)
+        jti = "some-jti"
+
+        await cache.set_not_revoked(jti)
+
+        result = await cache.is_token_revoked(jti)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_set_not_revoked_ignored_if_already_revoked(self, auth_cache):
+        """If JTI is in _revoked_jtis, set_not_revoked must not overwrite it."""
+        jti = "confirmed-revoked-jti"
+        auth_cache._revoked_jtis.add(jti)
+
+        await auth_cache.set_not_revoked(jti)
+
+        # Fast path via _revoked_jtis must still return True
+        result = await auth_cache.is_token_revoked(jti)
+        assert result is True
+        # L1 cache must not hold a False entry for this JTI
+        entry = auth_cache._revocation_cache.get(jti)
+        assert entry is None or entry.value is True
+
+    @pytest.mark.asyncio
+    async def test_invalidate_revocation_evicts_false_entry(self, auth_cache):
+        """invalidate_revocation() must evict a cached False so revocation takes effect."""
+        jti = "to-be-revoked-jti"
+        auth_cache._redis_available = False
+
+        await auth_cache.set_not_revoked(jti)
+        assert await auth_cache.is_token_revoked(jti) is False
+
+        await auth_cache.invalidate_revocation(jti)
+
+        result = await auth_cache.is_token_revoked(jti)
+        assert result is True
+
+
+class TestTeamToDictDefensiveAccess:
+    """team_to_dict must use getattr; _team_from_dict must use d.get() for optional fields."""
+
+    def test_team_to_dict_handles_missing_optional_attributes(self):
+        """team_to_dict must not raise AttributeError for optional fields."""
+        from unittest.mock import MagicMock
+
+        team = MagicMock()
+        team.id = "t1"
+        team.name = "Team1"
+        # Simulate a future-schema object where slug might not exist:
+        del team.slug
+        team.description = None
+        team.created_by = "admin@example.com"
+        team.is_personal = False
+        team.visibility = "public"
+        team.max_members = None
+        team.is_active = True
+        team.created_at = None
+        team.updated_at = None
+
+        # Must not raise AttributeError
+        d = AuthCache.team_to_dict(team)
+        assert d["id"] == "t1"
+        assert d.get("slug") is None  # missing attribute becomes None
+
+    def test_team_from_dict_handles_missing_optional_keys(self):
+        """_team_from_dict must tolerate a dict missing non-essential keys."""
+        # First-Party
+        from mcpgateway.services.team_management_service import _team_from_dict
+
+        # Minimal dict — keys added in a hypothetical future version are absent
+        d = {"id": "t2", "name": "T2"}
+        # Must not raise KeyError
+        team = _team_from_dict(d)
+        assert team.id == "t2"
+        assert team.name == "T2"
+        assert team.slug == ""  # default for missing key
+        assert team.is_active is True  # default
