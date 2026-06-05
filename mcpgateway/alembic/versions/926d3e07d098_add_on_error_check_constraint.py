@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""add on_error check constraint to tool_plugin_bindings
+"""Location: ./mcpgateway/alembic/versions/926d3e07d098_add_on_error_check_constraint.py
+Copyright 2026
+SPDX-License-Identifier: Apache-2.0
+Authors: Mihai Criveti
+
+add on_error check constraint to tool_plugin_bindings
 
 Revision ID: 926d3e07d098
 Revises: 9c45d2e63bc0
@@ -28,6 +33,11 @@ def upgrade() -> None:
 
     if "tool_plugin_bindings" not in inspector.get_table_names():
         return
+
+    columns = [col["name"] for col in inspector.get_columns("tool_plugin_bindings")]
+    # The on error column will be removed when downgrading from 4842b831d24e
+    if "on_error" not in columns:
+        op.add_column("tool_plugin_bindings", sa.Column("on_error", sa.String(10), nullable=True))
 
     # SQLite: CHECK constraints are only applied at table creation time.
     # Fresh installs get the constraint from the ORM model in db.py.
