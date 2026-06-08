@@ -99,10 +99,11 @@ class TestHeaderSizeMiddleware:
     @pytest.mark.asyncio
     async def test_request_rejected_total_size_too_large(self, middleware, mock_request):
         """Test request rejected when total header size exceeds limit."""
-        # Create multiple headers that together exceed 1000 bytes but each under 500 bytes
-        # Each header: "X-H-{i}: " + value = ~10 + 2 + 80 = ~92 bytes
-        # 12 headers * 92 = ~1104 bytes > 1000 bytes limit
-        headers_dict = {f"X-H-{i}": "x" * 80 for i in range(12)}
+        # Create headers that together exceed 1000 bytes but stay under 10 header count limit
+        # and each field under 500 bytes limit
+        # Strategy: Use 8 headers (under 10 limit), each ~130 bytes = ~1040 bytes total
+        # Each header: "X-Header-{i}: " + value = ~12 + 2 + 116 = ~130 bytes
+        headers_dict = {f"X-Header-{i}": "x" * 116 for i in range(8)}
         mock_request.headers = Headers(headers_dict)
 
         mock_call_next = AsyncMock()
@@ -110,7 +111,8 @@ class TestHeaderSizeMiddleware:
 
         assert response.status_code == 431
         body = response.body.decode()
-        assert ("Total header size exceeds maximum" in body or "Too many header fields" in body)
+        assert "Total header size exceeds maximum" in body
+        assert "total_size" in body  # Verify it's the total_size violation type
         mock_call_next.assert_not_called()
 
     @pytest.mark.asyncio

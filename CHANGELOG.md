@@ -4124,6 +4124,7 @@ Welcome aboard-your PRs made 0.2.0 measurably better! 🎉
 * Fixed gateway addition errors when tools overlap. We add the missing tools when tool names overlap.
 * Improved logging by capturing ExceptionGroups correctly and showing specific errors
 * Fixed headers for basic authorization in tools and gateways
+* **RFC 6585: 431 Request Header Fields Too Large** - Added opt-in middleware to validate header sizes and prevent resource exhaustion attacks. Configurable limits: total size (16KB), individual field size (8KB), header count (100). Returns RFC-compliant 431 responses with `Connection: close` header. **Disabled by default** for backward compatibility. Enable via `HEADER_SIZE_VALIDATION_ENABLED=true`.
 
 ## [0.1.0] - 2025-06-01
 

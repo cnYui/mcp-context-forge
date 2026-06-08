@@ -2740,9 +2740,7 @@ class Settings(BaseSettings):
     # Experimental dataplane config
     # ===================================
 
-    dataplane_publisher: bool = Field(default=False,
-        description="Send data from CF to Rust experimental dataplane"
-    )
+    dataplane_publisher: bool = Field(default=False, description="Send data from CF to Rust experimental dataplane")
 
     # Well-Known URI Configuration
     # ===================================
@@ -3304,7 +3302,7 @@ Disallow: /
     rate_limit_lockout_duration_minutes: int = Field(default=15, description="Lockout duration in minutes")
 
     # RFC 6585 5: 431 Request Header Fields Too Large
-    header_size_validation_enabled: bool = Field(default=True, description="Enable RFC 6585 header size validation (431 responses)")
+    header_size_validation_enabled: bool = Field(default=False, description="Enable RFC 6585 header size validation (431 responses)")
     max_header_total_size_bytes: int = Field(default=16384, description="Maximum total size of all headers (16KB default)")
     max_header_field_size_bytes: int = Field(default=8192, description="Maximum size of individual header field (8KB default)")
     max_header_count: int = Field(default=100, description="Maximum number of header fields")

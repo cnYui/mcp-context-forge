@@ -48,7 +48,7 @@ class HeaderSizeMiddleware(BaseHTTPMiddleware):
             app: The ASGI application to wrap
         """
         super().__init__(app)
-        self.enabled = getattr(settings, "header_size_validation_enabled", True)
+        self.enabled = getattr(settings, "header_size_validation_enabled", False)
         self.max_total_size = getattr(settings, "max_header_total_size_bytes", 16384)  # 16KB default
         self.max_field_size = getattr(settings, "max_header_field_size_bytes", 8192)  # 8KB default
         self.max_header_count = getattr(settings, "max_header_count", 100)
