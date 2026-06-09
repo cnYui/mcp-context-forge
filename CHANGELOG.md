@@ -2,6 +2,18 @@
 
 > All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project **adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)**.
 
+## [Unreleased]
+
+### Added
+
+#### **🔐 OAuth Multi-Identity Support**
+
+- **Multiple OAuth Identities Per User** ([#5043](https://github.com/IBM/mcp-context-forge/issues/5043)) – Enables a single ContextForge user to authorize a gateway with multiple OAuth provider accounts (e.g., different IBMids). Each OAuth identity's tokens are stored separately, and the most recently authorized identity is automatically selected for requests. This allows administrators to manage gateways on behalf of multiple end-users without requiring separate ContextForge accounts for each OAuth identity.
+  - **Database Migration**: Modified `oauth_tokens` unique constraint from `(gateway_id, app_user_email)` to `(gateway_id, app_user_email, user_id)` to support multiple OAuth provider identities per ContextForge user
+  - **Token Selection**: Automatically uses the most recently updated OAuth token when multiple identities exist
+  - **Token Management**: `revoke_user_tokens()` now revokes all OAuth identities for a user-gateway pair
+  - **Backward Compatible**: Existing single-identity deployments continue working without changes
+
 ## [1.0.2] - 2026-05-25 - Admin UI Rewrite, Database Migrations, Security Enhancements, and Bug Fixes
 
 ### Overview
