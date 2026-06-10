@@ -165,10 +165,7 @@ class MetricsRollupService:
         self._rollup_runs = 0
 
         logger.info(
-            f"MetricsRollupService initialized: enabled={self.enabled}, "
-            f"interval_hours={self.rollup_interval_hours}, "
-            f"delete_raw={self.delete_raw_after_rollup}, "
-            f"postgresql={self._is_postgresql}"
+            f"MetricsRollupService initialized: enabled={self.enabled}, interval_hours={self.rollup_interval_hours}, delete_raw={self.delete_raw_after_rollup}, postgresql={self._is_postgresql}"
         )
 
     def pause(self, reason: str = "maintenance") -> None:
@@ -234,7 +231,7 @@ class MetricsRollupService:
             except asyncio.CancelledError:
                 pass
 
-        logger.info(f"MetricsRollupService shutdown complete: " f"total_rollups={self._total_rollups}, rollup_runs={self._rollup_runs}")
+        logger.info(f"MetricsRollupService shutdown complete: total_rollups={self._total_rollups}, rollup_runs={self._rollup_runs}")
 
     async def _rollup_loop(self) -> None:
         """Background task that periodically rolls up metrics.
@@ -526,7 +523,7 @@ class MetricsRollupService:
         duration = time.monotonic() - start_time
 
         if rollups_created + rollups_updated > 0:
-            logger.debug(f"Rolled up {table_name}: {records_aggregated} records -> " f"{rollups_created} new, {rollups_updated} updated rollups")
+            logger.debug(f"Rolled up {table_name}: {records_aggregated} records -> {rollups_created} new, {rollups_updated} updated rollups")
 
         return RollupResult(
             table_name=table_name,

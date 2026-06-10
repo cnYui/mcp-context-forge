@@ -214,7 +214,7 @@ class MetricsBufferService:
         # Final flush to persist any remaining metrics
         await self._flush_all()
 
-        logger.info(f"MetricsBufferService shutdown complete: " f"total_buffered={self._total_buffered}, total_flushed={self._total_flushed}, " f"flush_count={self._flush_count}")
+        logger.info(f"MetricsBufferService shutdown complete: total_buffered={self._total_buffered}, total_flushed={self._total_flushed}, flush_count={self._flush_count}")
 
     def record_tool_metric(
         self,
@@ -547,9 +547,7 @@ class MetricsBufferService:
             return
 
         logger.debug(
-            f"Flushing {total} metrics: "
-            f"tools={len(tool_metrics)}, resources={len(resource_metrics)}, prompts={len(prompt_metrics)}, "
-            f"servers={len(server_metrics)}, a2a_agents={len(a2a_agent_metrics)}"
+            f"Flushing {total} metrics: tools={len(tool_metrics)}, resources={len(resource_metrics)}, prompts={len(prompt_metrics)}, servers={len(server_metrics)}, a2a_agents={len(a2a_agent_metrics)}"
         )
 
         # Flush in thread to avoid blocking event loop

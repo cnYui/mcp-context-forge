@@ -325,19 +325,20 @@ repos:
   # -----------------------------------------------------------------------------
   # 🐍 Python Formatting Hooks (MODIFIES FILES)
   # -----------------------------------------------------------------------------
-  # - repo: https://github.com/astral-sh/ruff-pre-commit
-  #   # Ruff version.
-  #   rev: v0.11.12
-  #   hooks:
-  #     # Run the linter.
-  #     - id: ruff-check
-  #       types_or: [ python, pyi ]
-  #       args: [ --fix ]
-  #       files: ^mcpgateway/
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: 0671d8ab202c4ac093b78433ae5baf74f3fc7246 #v0.15.16
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        types_or: [ python, pyi ]
+        args: [ --fix ]
+        files: ^(mcpgateway|plugins)/
+
       # Run the formatter.
-      # - id: ruff-format
-      #   types_or: [ python, pyi ]
-      #   files: ^mcpgateway/
+      - id: ruff-format
+        types_or: [ python, pyi ]
+        files: ^(mcpgateway|plugins)/
 
   # -----------------------------------------------------------------------------
   # 🚀 Performance and Optimization Hooks (MODIFIES FILES)

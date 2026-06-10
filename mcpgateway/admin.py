@@ -4839,7 +4839,7 @@ async def _admin_logout(request: Request) -> Response:
                 # Match if referer host matches request host and path contains /admin or /oauth/callback
                 if referer_parsed.netloc == request_host and ("/admin" in referer_parsed.path or "/oauth/callback" in referer_parsed.path):
                     is_same_origin_referer = True
-            except Exception: # nosec B110
+            except Exception:  # nosec B110
                 pass  # Invalid referer URL, treat as not same-origin
 
         is_browser_request = "text/html" in accept_header or is_htmx or is_same_origin_referer
@@ -7982,9 +7982,7 @@ async def admin_create_user(
         )
 
         # If the user was created with the default password, optionally force password change
-        if (
-            settings.password_change_enforcement_enabled and getattr(settings, "require_password_change_for_default_password", True) and password == settings.default_user_password.get_secret_value()
-        ):  # nosec B105
+        if settings.password_change_enforcement_enabled and getattr(settings, "require_password_change_for_default_password", True) and password == settings.default_user_password.get_secret_value():  # nosec B105
             new_user.password_change_required = True
             db.commit()
 
@@ -8102,12 +8100,16 @@ async def admin_get_user_edit(
                     <input type="text" name="full_name" value="{user_obj.full_name or ""}" required
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 text-gray-900 dark:text-white">
                 </div>
-                {"" if is_editing_self else f'''<div>
+                {
+            ""
+            if is_editing_self
+            else f'''<div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         <input type="checkbox" name="is_admin" {"checked" if user_obj.is_admin else ""}
                                class="mr-2"> Administrator
                     </label>
-                </div>'''}
+                </div>'''
+        }
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         <input type="checkbox" name="email_verified" {"checked" if user_obj.is_email_verified() else ""}
@@ -16929,12 +16931,7 @@ async def get_resources_section(
         LOGGER.debug(f"User {user_email} requesting resources section with team_id={team_id}, token_teams={token_teams}")
 
         # Get all resources with token_teams for proper scoping
-        resources_result = await local_resource_service.list_resources(
-            db,
-            include_inactive=True,
-            user_email=user_email,
-            token_teams=token_teams
-        )
+        resources_result = await local_resource_service.list_resources(db, include_inactive=True, user_email=user_email, token_teams=token_teams)
         if isinstance(resources_result, tuple):
             resources_list = resources_result[0]
         else:
@@ -16995,12 +16992,7 @@ async def get_prompts_section(
         LOGGER.debug(f"User {user_email} requesting prompts section with team_id={team_id}, token_teams={token_teams}")
 
         # Get all prompts with token_teams for proper scoping
-        prompts_result = await local_prompt_service.list_prompts(
-            db,
-            include_inactive=True,
-            user_email=user_email,
-            token_teams=token_teams
-        )
+        prompts_result = await local_prompt_service.list_prompts(db, include_inactive=True, user_email=user_email, token_teams=token_teams)
         if isinstance(prompts_result, tuple):
             prompts_list = prompts_result[0]
         else:

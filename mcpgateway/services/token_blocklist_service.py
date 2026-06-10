@@ -216,7 +216,7 @@ class TokenBlocklistService:
 
         if idle_duration > max_idle:
             logger.info(
-                f"Token {jti} exceeded idle timeout: {idle_duration.total_seconds()/60:.1f} minutes",
+                f"Token {jti} exceeded idle timeout: {idle_duration.total_seconds() / 60:.1f} minutes",
                 extra={"security_event": "idle_timeout", "security_severity": "low", "jti": jti, "idle_minutes": idle_duration.total_seconds() / 60},
             )
             return True

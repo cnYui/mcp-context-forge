@@ -186,9 +186,7 @@ class MetricsCleanupService:
         self._total_cleaned = 0
         self._cleanup_runs = 0
 
-        logger.info(
-            f"MetricsCleanupService initialized: enabled={self.enabled}, " f"retention_days={self.retention_days}, batch_size={self.batch_size}, " f"interval_hours={self.cleanup_interval_hours}"
-        )
+        logger.info(f"MetricsCleanupService initialized: enabled={self.enabled}, retention_days={self.retention_days}, batch_size={self.batch_size}, interval_hours={self.cleanup_interval_hours}")
 
     async def start(self) -> None:
         """Start the background cleanup task."""
@@ -216,7 +214,7 @@ class MetricsCleanupService:
             except asyncio.CancelledError:
                 pass
 
-        logger.info(f"MetricsCleanupService shutdown complete: " f"total_cleaned={self._total_cleaned}, cleanup_runs={self._cleanup_runs}")
+        logger.info(f"MetricsCleanupService shutdown complete: total_cleaned={self._total_cleaned}, cleanup_runs={self._cleanup_runs}")
 
     async def _cleanup_loop(self) -> None:
         """Background task that periodically cleans up old metrics.
@@ -249,7 +247,7 @@ class MetricsCleanupService:
                 self._total_cleaned += summary.total_deleted
 
                 if summary.total_deleted > 0:
-                    logger.info(f"Metrics cleanup #{self._cleanup_runs}: deleted {summary.total_deleted} records " f"in {summary.duration_seconds:.2f}s")
+                    logger.info(f"Metrics cleanup #{self._cleanup_runs}: deleted {summary.total_deleted} records in {summary.duration_seconds:.2f}s")
 
             except asyncio.CancelledError:
                 logger.debug("Cleanup loop cancelled")

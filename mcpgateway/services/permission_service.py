@@ -126,7 +126,7 @@ class PermissionService:
             if token_teams is not None and len(token_teams) == 0:
                 # Public-only tokens: admin bypass is suppressed entirely
                 if allow_admin_bypass and await self._is_user_admin(user_email):
-                    logger.warning(f"[RBAC] Admin bypass suppressed for public-only token: " f"user={SecurityValidator.sanitize_log_message(user_email)}, permission={permission}")
+                    logger.warning(f"[RBAC] Admin bypass suppressed for public-only token: user={SecurityValidator.sanitize_log_message(user_email)}, permission={permission}")
                 # Continue to permission check without admin bypass
             elif allow_admin_bypass and await self._is_user_admin(user_email):
                 # Check if user is admin (bypass all permission checks if allowed)

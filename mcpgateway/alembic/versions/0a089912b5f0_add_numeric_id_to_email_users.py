@@ -56,7 +56,8 @@ def upgrade() -> None:
     else:
         # SQLite: use Python-generated UUIDs via a subquery isn't possible,
         # so we use a single UPDATE with a hex() + randomblob() approach.
-        bind.execute(text("""
+        bind.execute(
+            text("""
             UPDATE email_users
             SET id = lower(hex(randomblob(4))) || '-'
                   || lower(hex(randomblob(2))) || '-'
@@ -64,7 +65,8 @@ def upgrade() -> None:
                   || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-'
                   || lower(hex(randomblob(6)))
             WHERE id IS NULL
-        """))
+        """)
+        )
 
     # Promote id to primary key and demote email to unique (SQLite requires batch mode)
     if bind.dialect.name == "sqlite":
