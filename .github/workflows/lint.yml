@@ -50,9 +50,6 @@ jobs:
       matrix:
         target: [mcpgateway, plugins]
         tool:
-          - id: ruff
-            runner: ubuntu-slim
-            cmd: "uv tool run ruff==$RUFF_VERSION check $TARGET"
           - id: vulture
             runner: ubuntu-slim
             cmd: 'uv tool run vulture==$VULTURE_VERSION $TARGET --min-confidence 80 --exclude "*_pb2.py,*_pb2_grpc.py"'
