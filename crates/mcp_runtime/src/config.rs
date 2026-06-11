@@ -15,7 +15,7 @@ pub const DEFAULT_MAX_REQUEST_BODY_SIZE_BYTES: usize = 10_485_760;
 
 #[derive(Debug, Clone, Parser)]
 #[command(name = "contextforge-mcp-runtime")]
-#[command(about = "Experimental Rust MCP runtime edge for ContextForge")]
+#[command(about = "Deprecated experimental Rust MCP runtime edge for ContextForge")]
 /// Runtime configuration parsed from CLI flags and environment variables.
 ///
 /// These options are intentionally low-level. In normal compose/test workflows,

@@ -39,7 +39,7 @@ impl CachedAllowlist {
 
 #[derive(Debug, Clone, Parser)]
 #[command(name = "contextforge-a2a-runtime")]
-#[command(about = "Experimental Rust A2A runtime sidecar for ContextForge")]
+#[command(about = "Deprecated experimental Rust A2A runtime sidecar for ContextForge")]
 pub struct RuntimeConfig {
     #[arg(long, env = "A2A_RUST_LISTEN_HTTP", default_value = "127.0.0.1:8788")]
     pub listen_http: String,

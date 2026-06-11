@@ -170,6 +170,8 @@ async def test_post_requests_proxy_to_rust_runtime_and_forward_internal_server_h
     assert events[0]["status"] == 200
     assert (b"mcp-session-id", b"session-1") in events[0]["headers"]
     assert (b"x-contextforge-mcp-runtime", b"rust") in events[0]["headers"]
+    assert (b"deprecation", b"@1781136000") in events[0]["headers"]
+    assert (b"link", b'<https://ibm.github.io/mcp-context-forge/deprecations/>; rel="deprecation"; type="text/html"') in events[0]["headers"]
     assert events[1]["type"] == "http.response.body"
     assert events[1]["more_body"] is True
     assert events[2]["type"] == "http.response.body"
@@ -715,6 +717,8 @@ async def test_runtime_failure_returns_jsonrpc_bad_gateway(monkeypatch):
 
     fallback.assert_not_awaited()
     assert events[0]["status"] == 502
+    assert (b"deprecation", b"@1781136000") in events[0]["headers"]
+    assert (b"link", b'<https://ibm.github.io/mcp-context-forge/deprecations/>; rel="deprecation"; type="text/html"') in events[0]["headers"]
     body = json.loads(events[1]["body"].decode())
     assert body["error"]["code"] == -32000
     assert body["error"]["message"] == "Experimental Rust MCP runtime unavailable"

@@ -46,6 +46,7 @@ from starlette.responses import Response, StreamingResponse
 
 # First-Party
 from mcpgateway.config import settings
+from mcpgateway.deprecations import DEPRECATION_DOC_URL, DEPRECATION_HEADER_DATE
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,21 @@ _HOP_BY_HOP_RESPONSE = frozenset(
         "upgrade",
     }
 )
+
+_DEPRECATION_LINK_VALUE = f'<{DEPRECATION_DOC_URL}>; rel="deprecation"; type="text/html"'
+
+
+def _append_deprecation_headers(headers: dict[str, str]) -> dict[str, str]:
+    """Append standard deprecation metadata for Rust MCP public responses."""
+    headers["Deprecation"] = DEPRECATION_HEADER_DATE
+    link_name = next((name for name in headers if name.lower() == "link"), None)
+    if link_name:
+        headers[link_name] = f"{headers[link_name]}, {_DEPRECATION_LINK_VALUE}"
+    else:
+        headers["Link"] = _DEPRECATION_LINK_VALUE
+    return headers
+
+
 # Forwarded-chain headers are dropped from the inbound request and
 # re-set unconditionally below. This is the no-nginx-in-front case: the
 # immediate hop is the client, so we cannot trust any value they
@@ -250,6 +266,7 @@ class RustMCPPublicProxyApp:
                 status_code=502,
                 content=b"Rust MCP public ingress unavailable",
                 media_type="text/plain",
+                headers=_append_deprecation_headers({}),
             )
             await error_response(scope, receive, send)
             return
@@ -267,6 +284,7 @@ class RustMCPPublicProxyApp:
                 status_code=500,
                 content=b"Rust MCP public ingress error",
                 media_type="text/plain",
+                headers=_append_deprecation_headers({}),
             )
             await error_response(scope, receive, send)
             return
@@ -282,7 +300,7 @@ class RustMCPPublicProxyApp:
                 upstream_response.status_code,
             )
 
-        response_headers = {name: value for name, value in upstream_response.headers.items() if name.lower() not in _HOP_BY_HOP_RESPONSE}
+        response_headers = _append_deprecation_headers({name: value for name, value in upstream_response.headers.items() if name.lower() not in _HOP_BY_HOP_RESPONSE})
 
         async def _body_iter():
             """Stream the upstream response body and close the upstream connection on exit.

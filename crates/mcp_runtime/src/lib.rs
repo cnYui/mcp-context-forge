@@ -4,6 +4,8 @@
 
 //! Rust MCP runtime sidecar for `ContextForge`.
 //!
+//! Deprecated as of 2026-06-11. Use the default Python MCP transport path.
+//!
 //! This crate owns the Rust-backed public MCP HTTP edge and, in `full` mode,
 //! can also own MCP session/event-store/resume/live-stream/affinity cores while
 //! still delegating authentication and RBAC authority to Python.
@@ -1407,6 +1409,9 @@ fn build_public_router(state: AppState) -> Router {
 /// Returns an error when configuration parsing fails, listener startup fails, or a listener
 /// exits with an application-level runtime error.
 pub async fn run(config: RuntimeConfig) -> Result<(), RuntimeError> {
+    warn!(
+        "The Rust MCP runtime sidecar is deprecated as of 2026-06-11. Use the default Python MCP transport path. See https://ibm.github.io/mcp-context-forge/deprecations/."
+    );
     let state = AppState::new(&config)?;
     spawn_local_cache_sweeper(state.clone());
     let app = build_router(state.clone());

@@ -30,6 +30,7 @@ from starlette.types import Receive, Scope, Send
 from mcpgateway.config import settings
 from mcpgateway.db import fresh_db_session
 from mcpgateway.db import Server as DbServer
+from mcpgateway.deprecations import DEPRECATION_DOC_URL, DEPRECATION_HEADER_DATE, RUST_MCP_RUNTIME_DEPRECATION_MESSAGE
 from mcpgateway.services.http_client_service import get_http_client, get_http_limits
 from mcpgateway.transports.streamablehttp_transport import get_streamable_http_auth_context
 from mcpgateway.utils.orjson_response import ORJSONResponse
@@ -65,6 +66,22 @@ _RESPONSE_HOP_BY_HOP_HEADERS = frozenset({"connection", "transfer-encoding", "ke
 # Sentinel returned by _validate_server_id to signal that an error response
 # has already been sent and the caller should return immediately.
 _REJECT = object()
+_rust_mcp_runtime_deprecation_logged = False
+
+
+def _log_rust_mcp_runtime_deprecation_once() -> None:
+    """Log the Rust MCP runtime deprecation once per process."""
+    global _rust_mcp_runtime_deprecation_logged  # pylint: disable=global-statement
+    if not _rust_mcp_runtime_deprecation_logged:
+        logger.warning(RUST_MCP_RUNTIME_DEPRECATION_MESSAGE)
+        _rust_mcp_runtime_deprecation_logged = True
+
+
+def _append_deprecation_headers(headers: list[tuple[bytes, bytes]]) -> list[tuple[bytes, bytes]]:
+    """Append standard deprecation metadata for Rust MCP runtime responses."""
+    headers.append((b"deprecation", DEPRECATION_HEADER_DATE.encode("ascii")))
+    headers.append((b"link", f'<{DEPRECATION_DOC_URL}>; rel="deprecation"; type="text/html"'.encode("ascii")))
+    return headers
 
 
 async def _validate_server_id(match: re.Match[str] | None, path: str, scope: Scope, receive: Receive, send: Send) -> str | object | None:
@@ -141,6 +158,7 @@ class RustMCPRuntimeProxy:
             logger.debug("Rust MCP runtime deferring to Python fallback: scope type %r is not 'http'", scope.get("type"))
             await self.python_fallback_app(scope, receive, send)
             return
+        _log_rust_mcp_runtime_deprecation_once()
 
         method = str(scope.get("method", "GET")).upper()
         if method not in {"GET", "POST", "DELETE"}:
@@ -172,7 +190,7 @@ class RustMCPRuntimeProxy:
                     {
                         "type": "http.response.start",
                         "status": response.status_code,
-                        "headers": [(name, value) for name, value in response.headers.raw if name.decode("latin-1").lower() not in _RESPONSE_HOP_BY_HOP_HEADERS],
+                        "headers": _append_deprecation_headers([(name, value) for name, value in response.headers.raw if name.decode("latin-1").lower() not in _RESPONSE_HOP_BY_HOP_HEADERS]),
                     }
                 )
                 async for chunk in response.aiter_bytes():
@@ -183,6 +201,10 @@ class RustMCPRuntimeProxy:
             logger.error("Experimental Rust MCP runtime request failed: %s", exc)
             error_response = ORJSONResponse(
                 status_code=502,
+                headers={
+                    "Deprecation": DEPRECATION_HEADER_DATE,
+                    "Link": f'<{DEPRECATION_DOC_URL}>; rel="deprecation"; type="text/html"',
+                },
                 content={
                     "jsonrpc": "2.0",
                     "id": None,

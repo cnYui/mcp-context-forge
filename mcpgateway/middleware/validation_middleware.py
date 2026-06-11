@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 import re
 from typing import Any
+import warnings
 
 # Third-Party
 from fastapi import HTTPException, Request, Response
@@ -29,8 +30,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # First-Party
 from mcpgateway.config import settings
+from mcpgateway.deprecations import VALIDATION_MIDDLEWARE_DEPRECATION_MESSAGE
 
 logger = logging.getLogger(__name__)
+_validation_middleware_deprecation_logged = False
 
 
 def is_path_traversal(uri: str) -> bool:
@@ -59,7 +62,12 @@ class ValidationMiddleware(BaseHTTPMiddleware):
         Args:
             app: FastAPI application instance
         """
+        global _validation_middleware_deprecation_logged  # pylint: disable=global-statement
         super().__init__(app)
+        warnings.warn(VALIDATION_MIDDLEWARE_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
+        if not _validation_middleware_deprecation_logged:
+            logger.warning(VALIDATION_MIDDLEWARE_DEPRECATION_MESSAGE)
+            _validation_middleware_deprecation_logged = True
         self.enabled = settings.experimental_validate_io
         self.strict = settings.validation_strict
         self.sanitize = settings.sanitize_output
