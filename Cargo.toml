@@ -1,13 +1,16 @@
 [workspace]
 resolver = "3"
-# Workspace policy: repo-owned crates that participate in the shared Rust
-# workspace live under crates/. Keep the glob so new workspace-owned crates are
-# included automatically from the repo root.
+# Workspace policy: repo-owned runtime crates live under crates/. Rust MCP
+# servers that are not shared crates belong under mcp-servers/rust. The A2A echo
+# agent is an A2A test agent, so it stays under a2a-agents/rust and is listed
+# explicitly to share the root Rust dependency policy.
 members = [
     "crates/*",
+    "a2a-agents/rust/a2a-echo-agent",
 ]
 default-members = [
     "crates/*",
+    "a2a-agents/rust/a2a-echo-agent",
 ]
 
 [workspace.package]
@@ -23,6 +26,7 @@ anyhow = "1.0"
 axum = "0.8.9"
 base64 = "0.22.1"
 bytes = "1.11.1"
+chrono = { version = "0.4.45", features = ["serde"] }
 clap = { version = "4.5.60", features = ["derive", "env"] }
 futures = "0.3.31"
 futures-util = "0.3.31"
@@ -46,6 +50,7 @@ reqwest = { version = "0.12.28", default-features = false, features = [
 
 # Async runtime
 tokio = { version = "1.49", features = ["full"] }
+tower-http = { version = "0.6.11", features = ["cors"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
